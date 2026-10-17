@@ -30,7 +30,7 @@
     <string name="st_live">live · %1$d kbps</string>
     <string name="st_error">error: %1$s</string>
     <string name="st_recording_to">recording → %1$s</string>
-    <string name="st_saves_to">saves to Movies/ChameleonCapture (visible in Gallery)</string>
+    <string name="st_saves_to">saves to Movies/CamLeon (visible in Gallery)</string>
     <string name="settings_show">Settings ▼</string>
     <string name="settings_hide">Hide settings ▲</string>
 
@@ -70,7 +70,7 @@
     <string name="save">Save</string>
     <string name="stream_auto">Start streaming automatically at app start</string>
     <string name="rec_auto">Start recording automatically at app start</string>
-    <string name="files_hint">Files go to the public Movies/ChameleonCapture folder (Gallery, Files app, USB).</string>
+    <string name="files_hint">Files go to the public Movies/CamLeon folder (Gallery, Files app, USB).</string>
     <string name="video_section">Video (stream + recording)</string>
     <string name="audio">Audio</string>
     <string name="display_section">Phone display</string>

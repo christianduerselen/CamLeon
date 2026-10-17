@@ -209,7 +209,7 @@ class MediaPipeline(
     // ---- recording ---------------------------------------------------------------------------
 
     /**
-     * Records into the public **Movies/ChameleonCapture** folder via MediaStore, so files show up in
+     * Records into the public **Movies/CamLeon** folder via MediaStore, so files show up in
      * Gallery / Photos / Files immediately and over USB — no export step, no storage permission.
      * The muxer is handed the file through /proc/self/fd so no copy is needed afterwards.
      * Falls back to the app's private Movies dir if MediaStore is unavailable.
@@ -220,8 +220,8 @@ class MediaPipeline(
         val s = engine()
         if (s.isRecording) return true
         if (!ensurePrepared(s, st)) return false
-        val name = "Chameleon_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp4"
-        // Public Movies/ChameleonCapture via direct path (allowed for the app's own media files on
+        val name = "CamLeon_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())}.mp4"
+        // Public Movies/CamLeon via direct path (allowed for the app's own media files on
         // Android 11+ without any permission); after stop the file is handed to the media scanner so
         // Gallery / Files / USB show it. RootEncoder opens the path itself (RandomAccessFile), so a
         // /proc/self/fd indirection is not usable here. Falls back to the app's private Movies dir.
@@ -266,7 +266,7 @@ class MediaPipeline(
 
     fun isRecording() = rtmp?.isRecording == true
 
-    fun recordingsDir(): File = File(context.getExternalFilesDir(Environment.DIRECTORY_MOVIES), "ChameleonCapture")
+    fun recordingsDir(): File = File(context.getExternalFilesDir(Environment.DIRECTORY_MOVIES), "CamLeon")
 
     // ---- orientation of the RootEncoder path (preview + stream + recording) ----------------------
 
@@ -325,5 +325,5 @@ class MediaPipeline(
         _stream.value = StreamState.Off; _recording.value = false; _previewing.value = false
     }
 
-    private companion object { const val TAG = "MediaPipeline"; const val RECORD_FOLDER = "ChameleonCapture" }
+    private companion object { const val TAG = "MediaPipeline"; const val RECORD_FOLDER = "CamLeon" }
 }

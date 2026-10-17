@@ -26,7 +26,7 @@
     <string name="st_live">live · %1$d kbit/s</string>
     <string name="st_error">Fehler: %1$s</string>
     <string name="st_recording_to">nimmt auf → %1$s</string>
-    <string name="st_saves_to">speichert nach Movies/ChameleonCapture (in der Galerie sichtbar)</string>
+    <string name="st_saves_to">speichert nach Movies/CamLeon (in der Galerie sichtbar)</string>
     <string name="settings_show">Einstellungen ▼</string>
     <string name="settings_hide">Einstellungen ausblenden ▲</string>
 
@@ -63,7 +63,7 @@
     <string name="save">Speichern</string>
     <string name="stream_auto">Streaming beim App-Start automatisch starten</string>
     <string name="rec_auto">Aufnahme beim App-Start automatisch starten</string>
-    <string name="files_hint">Dateien landen im öffentlichen Ordner Movies/ChameleonCapture (Galerie, Eigene Dateien, USB).</string>
+    <string name="files_hint">Dateien landen im öffentlichen Ordner Movies/CamLeon (Galerie, Eigene Dateien, USB).</string>
     <string name="video_section">Video (Stream + Aufnahme)</string>
     <string name="audio">Audio</string>
     <string name="display_section">Handy-Display</string>
