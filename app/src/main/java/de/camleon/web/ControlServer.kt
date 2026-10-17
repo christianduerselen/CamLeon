@@ -6,6 +6,7 @@ import de.camleon.BuildConfig
 import de.camleon.CaptureSession
 import de.camleon.ble.CrcCalib
 import de.camleon.ble.ProtocolLog
+import de.camleon.stream.Recordings
 import fi.iki.elonen.NanoHTTPD
 import org.json.JSONObject
 
@@ -27,6 +28,10 @@ import org.json.JSONObject
  *                 GET  /api/ble/log  | POST /api/ble/log/clear
  *   Preview: POST /api/webrtc/offer (body = SDP) -> {id,sdp} | POST /api/webrtc/stop?id= | GET /api/webrtc/stats
  *            GET  /api/snapshot.jpg
+ *   Recordings (page: GET /recordings):
+ *   GET  /api/recordings                       list {recordings:[{name,size,modified,durationMs,recording,playable,deletable}],totalBytes}
+ *   GET  /api/recordings/file?name=&download=1 the MP4 (Range requests supported; download=1 → attachment)
+ *   POST /api/recordings/delete?name=
  */
 class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : NanoHTTPD(port) {
 
@@ -38,7 +43,8 @@ class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : Na
         fun on() = param("on")?.toBooleanStrictOrNull()
         return try {
             when {
-                uri == "/" || uri == "/index.html" -> servePage()
+                uri == "/" || uri == "/index.html" -> servePage("web/index.html")
+                uri == "/recordings" || uri == "/recordings.html" -> servePage("web/recordings.html")
                 uri == "/favicon-64.png" || uri == "/apple-touch-icon.png" -> {
                     val png = context.assets.open("web" + uri).readBytes()
                     newFixedLengthResponse(Response.Status.OK, "image/png", java.io.ByteArrayInputStream(png), png.size.toLong())
@@ -112,7 +118,20 @@ class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : Na
                     newFixedLengthResponse(Response.Status.OK, "image/jpeg", java.io.ByteArrayInputStream(jpg), jpg.size.toLong()).also { it.addHeader("Cache-Control", "no-store") }
                 }
 
-                else -> newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "not found")
+                uri == "/api/recordings" -> json(CaptureSession.recordings.toJson())
+                uri == "/api/recordings/file" -> {
+                    val f = CaptureSession.recordings.find(param("name") ?: "") ?: return notFound()
+                    if (CaptureSession.recordings.isRecording(f)) return newFixedLengthResponse(Response.Status.CONFLICT, MIME_PLAINTEXT, "still recording")
+                    serveFile(session, f, download = param("download") == "1")
+                }
+                uri == "/api/recordings/delete" && post -> when (CaptureSession.recordings.delete(param("name") ?: "")) {
+                    Recordings.DeleteResult.Ok -> ok()
+                    Recordings.DeleteResult.NotFound -> notFound()
+                    Recordings.DeleteResult.Recording -> newFixedLengthResponse(Response.Status.CONFLICT, MIME_PLAINTEXT, "still recording")
+                    Recordings.DeleteResult.NotAllowed -> newFixedLengthResponse(Response.Status.FORBIDDEN, MIME_PLAINTEXT, "not deletable from here")
+                }
+
+                else -> notFound()
             }
         } catch (t: Throwable) {
             Log.e(TAG, "serve error", t)
@@ -128,13 +147,43 @@ class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : Na
 
     private fun parseInt(s: String): Int? = s.trim().let { if (it.startsWith("0x", true)) it.substring(2).toIntOrNull(16) else it.toIntOrNull() }
 
-    private fun servePage(): Response {
-        val html = context.assets.open("web/index.html").bufferedReader().use { it.readText() }
+    private fun servePage(asset: String): Response {
+        val html = context.assets.open(asset).bufferedReader().use { it.readText() }
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=utf-8", html)
+    }
+
+    /**
+     * Stream a recording with HTTP Range support: browsers seek in the <video> element and resume
+     * downloads with range requests (Safari insists on them for video at all).
+     */
+    private fun serveFile(session: IHTTPSession, f: java.io.File, download: Boolean): Response {
+        val len = f.length()
+        var start = 0L
+        var end = len - 1
+        val range = session.headers["range"]
+        val partial = range != null && range.startsWith("bytes=")
+        if (partial) {
+            val spec = range!!.removePrefix("bytes=").substringBefore(',').trim()
+            val a = spec.substringBefore('-'); val b = spec.substringAfter('-', "")
+            if (a.isEmpty()) start = (len - (b.toLongOrNull() ?: 0L)).coerceAtLeast(0L)
+            else { start = a.toLongOrNull() ?: 0L; b.toLongOrNull()?.let { end = minOf(it, len - 1) } }
+            if (start > end || start >= len) {
+                return newFixedLengthResponse(Response.Status.RANGE_NOT_SATISFIABLE, MIME_PLAINTEXT, "")
+                    .also { it.addHeader("Content-Range", "bytes */$len") }
+            }
+        }
+        val input = java.io.FileInputStream(f).also { it.channel.position(start) }
+        val r = newFixedLengthResponse(if (partial) Response.Status.PARTIAL_CONTENT else Response.Status.OK, "video/mp4", input, end - start + 1)
+        r.addHeader("Accept-Ranges", "bytes")
+        if (partial) r.addHeader("Content-Range", "bytes $start-$end/$len")
+        r.addHeader("Content-Disposition", (if (download) "attachment" else "inline") + "; filename=\"${f.name}\"")
+        r.addHeader("Cache-Control", "no-store")
+        return r
     }
 
     private fun ok() = json("""{"ok":true}""")
     private fun result(ok: Boolean) = json(JSONObject().put("ok", ok).put("status", CaptureSession.statusJson()))
+    private fun notFound() = newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT, "not found")
     private fun bad(msg: String) = newFixedLengthResponse(Response.Status.BAD_REQUEST, MIME_PLAINTEXT, msg)
     private fun json(o: JSONObject) = json(o.toString())
     private fun json(body: String): Response = newFixedLengthResponse(Response.Status.OK, "application/json; charset=utf-8", body)

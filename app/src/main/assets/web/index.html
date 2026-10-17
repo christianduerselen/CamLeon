@@ -65,6 +65,8 @@
   .pad .c.on { color:#fff; background:#2c323c; }
   .ang { font-family:ui-monospace,monospace; font-size:14px; }
   .refs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+  .stat { display:flex; gap:12px; padding:6px 0; border-top:1px solid #262b34; font-size:14px; } .stat:first-of-type { border-top:0; }
+  .stat b { flex:0 0 72px; } .stat span { color:var(--mut); } .stat .warn { color:#ffb454; font-weight:600; } .stat .crit { color:var(--err); font-weight:600; }
   .refs div { background:#0e1116; border-radius:8px; padding:8px; text-align:center; }
   .refs b { display:block; font-size:12px; color:var(--mut); font-weight:600; } .refs span { font-family:ui-monospace,monospace; }
 </style>
@@ -139,8 +141,16 @@
     </div>
     <div class="sw">
       <div class="t"><b data-i18n="recording">Recording</b><span id="stRec">…</span></div>
+      <a href="/recordings" class="sm" data-i18n="recordingsLink" style="padding:7px 12px;border-radius:8px;background:#2c323c;color:#fff;font-size:13px;font-weight:600;text-decoration:none">Recordings</a>
       <label class="toggle rec"><input type="checkbox" id="swRec" onchange="toggle('recording', this)"><i></i></label>
     </div>
+  </div>
+
+  <!-- 3b. Status: phone health + gimbal power (same data as /api/status) -->
+  <div class="card">
+    <div class="ctitle" data-i18n="statusCard">Status</div>
+    <div class="stat"><b data-i18n="phoneLbl">Phone</b><span id="stPhone">…</span></div>
+    <div class="stat"><b data-i18n="gimbal">Gimbal</b><span id="stGimbal">…</span></div>
   </div>
 
   <!-- 4. Settings: one block per function; a running function locks its block -->
@@ -237,6 +247,13 @@ const fmt = v => (v == null ? '—' : Number(v).toFixed(1));
 // ---- i18n: static texts via data-i18n, dynamic ones via t(); server messages via tr() ----
 const I18N = {
   en: {
+    gimbal: 'Gimbal', last: 'last', noRemembered: 'no gimbal remembered', connect: 'Connect', noName: '(no name)',
+    sdkRunning: 'gimbal SDK running', starting: 'starting…', idle: 'idle', connectFirst: 'connect the gimbal first',
+    liveAt: 'live', connecting: 'connecting…', error: 'error', setUrl: 'enter an RTMP URL below', recordingTo: 'recording →', savesTo: 'saves to Movies/CamLeon (Gallery)',
+    fromSdk: '(from the tracking SDK)', notConnected: 'not connected', driving: 'driving to 0°…', lockedWhile: 'locked while', trackingRuns: 'tracking runs',
+    cameraMax: 'At this resolution the camera delivers at most', fpsStreaming: 'fps → stream', cameraCapture: 'Camera capture',
+    battery: 'Battery', onPower: 'on power', onBattery: 'on battery', temp: 'Temperature', free: 'free', recLeft: 'recording',
+    th_none: 'normal', th_light: 'slightly raised', th_moderate: 'raised', th_severe: 'high — phone throttles', th_critical: 'critical', th_emergency: 'critical', th_shutdown: 'critical — shutting down', th_unknown: '—',
     sp_BASKETBALL: 'Basketball', sp_SOCCER: 'Soccer', sp_HANDBALL: 'Handball', sp_ICE_HOCKEY: 'Ice hockey', sp_LACROSSE: 'Lacrosse',
     sp_AMERICAN_FOOTBALL: 'American football', sp_VOLLEYBALL: 'Volleyball',
     var_full_high: 'Full court · raised camera', var_full_low: 'Full court · low camera', var_half_high: 'Half court · raised camera',
@@ -265,6 +282,9 @@ const I18N = {
     angleHint: 'Der Winkel gilt ± um die Richtung, in die die Kamera beim Tracking-Start zeigt: auf die Mittellinie zielen, dann Tracking einschalten.',
     display: 'Handy-Display', scrOn: 'Display an lassen', scrDim: 'abdunkeln: schwarzer Bildschirm (Tippen am Handy weckt es)', scrTimeout: 'System-Timeout: Display schaltet sich selbst ab',
     displayHint: 'Kamera, Stream und Gimbal laufen auch mit dunklem oder ausgeschaltetem Display weiter.',
+    recordingsLink: 'Aufnahmen', statusCard: 'Status', phoneLbl: 'Handy',
+    battery: 'Akku', onPower: 'am Strom', onBattery: 'Akkubetrieb', temp: 'Temperatur', free: 'frei', recLeft: 'Aufnahme',
+    th_none: 'normal', th_light: 'leicht erhöht', th_moderate: 'erhöht', th_severe: 'hoch — Handy drosselt', th_critical: 'kritisch', th_emergency: 'kritisch', th_shutdown: 'kritisch — schaltet ab', th_unknown: '—',
     streamAuto: 'Streaming beim App-Start automatisch starten', recAuto: 'Aufnahme beim App-Start automatisch starten',
     filesHint: 'Dateien: öffentlicher Ordner Movies/CamLeon (Galerie, Eigene Dateien, USB)', video: 'Video · Stream + Aufnahme', quality: 'Qualität', audio: 'Audio',
     // dynamic
@@ -382,6 +402,15 @@ async function refresh() {
       : st.state === 'error' ? (t('error') + ': ' + tr(st.error)) : (cfg.rtmpUrl || t('setUrl'));
     $('swRec').checked = rc.on;
     $('stRec').textContent = rc.on ? (t('recordingTo') + ' ' + (rc.file || '').split('/').pop()) : t('savesTo');
+    // status card
+    const ph = s.phone || {};
+    const gb = (b, p) => [b != null ? t('battery') + ' ' + b + ' %' : null, p == null ? null : (p ? t('onPower') : t('onBattery'))].filter(Boolean).join(' · ');
+    const th = ph.thermal || 'unknown', thCls = ['severe'].includes(th) ? 'warn' : ['critical', 'emergency', 'shutdown'].includes(th) ? 'crit' : '';
+    const gbytes = v => v == null ? '—' : (v / 1073741824).toFixed(v >= 1073741824 * 10 ? 0 : 1) + ' GB';
+    const hm = m => m == null ? '' : ' (≈ ' + (m >= 60 ? Math.floor(m / 60) + ' h' : m + ' min') + ' ' + t('recLeft') + ')';
+    $('stPhone').innerHTML = [gb(ph.battery, ph.powered), t('temp') + ' <span class="' + thCls + '">' + t('th_' + th) + '</span>',
+      gbytes(ph.storageFreeBytes) + ' ' + t('free') + hm(ph.recordMinutesLeft)].filter(Boolean).join(' · ');
+    $('stGimbal').textContent = ready ? (gb(g.battery, g.powered) || '…') : t('notConnected');
     // gimbal angles + pan range
     $('gyaw').textContent = fmt(g.yaw) + '°'; $('gpitch').textContent = fmt(g.pitch) + '°';
     $('gnote').textContent = g.note ? ' · ' + tr(g.note) : (ready ? '' : ' · ' + t('notConnected'));

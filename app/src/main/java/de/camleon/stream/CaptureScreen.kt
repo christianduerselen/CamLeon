@@ -134,6 +134,7 @@ fun CaptureScreen() {
                 title = stringResource(R.string.recording), checked = recording, onToggle = { CaptureSession.setRecording(it) },
                 status = if (recording) stringResource(R.string.st_recording_to, recordFile?.substringAfterLast('/') ?: "") else stringResource(R.string.st_saves_to),
             )
+            StatusCard(connected)
             var askQuit by remember { mutableStateOf(false) }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = { showSettings = !showSettings }) { Text(stringResource(if (showSettings) R.string.settings_hide else R.string.settings_show)) }
@@ -341,6 +342,60 @@ private fun HoldButton(label: String, onHold: (Boolean) -> Unit) {
         Card(colors = CardDefaults.cardColors(containerColor = if (pressed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)) {
             Box(Modifier.size(46.dp), contentAlignment = Alignment.Center) { Text(label, style = MaterialTheme.typography.titleMedium) }
         }
+    }
+}
+
+/** Phone health + gimbal power, same data as the `phone` / `gimbal` blocks of /api/status (refreshed every 5 s). */
+@Composable
+private fun StatusCard(connected: Boolean) {
+    var phone by remember { mutableStateOf<org.json.JSONObject?>(null) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        // A new object every round → the card recomposes and also re-reads the gimbal values.
+        while (true) { phone = runCatching { CaptureSession.phoneStatus() }.getOrNull(); kotlinx.coroutines.delay(5000) }
+    }
+    @Composable fun power(battery: Int?, powered: Boolean?) = listOfNotNull(
+        battery?.let { stringResource(R.string.stat_battery, it) },
+        powered?.let { stringResource(if (it) R.string.stat_on_power else R.string.stat_on_battery) },
+    ).joinToString(" · ")
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.status), style = MaterialTheme.typography.titleMedium)
+            val p = phone
+            if (p != null) {
+                val thermal = p.optString("thermal", "unknown")
+                val thermalText = stringResource(when (thermal) {
+                    "none" -> R.string.th_none; "light" -> R.string.th_light; "moderate" -> R.string.th_moderate
+                    "severe" -> R.string.th_severe; "critical", "emergency" -> R.string.th_critical; "shutdown" -> R.string.th_shutdown
+                    else -> R.string.th_unknown
+                })
+                val thermalColor = when (thermal) {
+                    "severe" -> androidx.compose.ui.graphics.Color(0xFFFFB454)
+                    "critical", "emergency", "shutdown" -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                }
+                val free = p.optLong("storageFreeBytes", -1).takeIf { it >= 0 }?.let { "%.0f GB".format(it / 1073741824.0) }
+                val left = if (p.has("recordMinutesLeft")) p.optLong("recordMinutesLeft").let { m ->
+                    if (m >= 60) stringResource(R.string.stat_rec_left_h, m / 60) else stringResource(R.string.stat_rec_left_min, m) } else null
+                StatusLine(stringResource(R.string.stat_phone)) {
+                    Text(listOf(power(p.optInt("battery", -1).takeIf { it >= 0 }, if (p.has("powered")) p.optBoolean("powered") else null),
+                        listOfNotNull(free?.let { stringResource(R.string.stat_free, it) }, left).joinToString(" ")).filter { it.isNotEmpty() }.joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.stat_temp, thermalText), style = MaterialTheme.typography.bodySmall, color = thermalColor)
+                }
+            }
+            StatusLine(stringResource(R.string.gimbal)) {
+                Text(if (connected) power(CaptureSession.gimbalBattery, CaptureSession.gimbalPowered).ifEmpty { "…" } else stringResource(R.string.stat_not_connected),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusLine(label: String, content: @Composable () -> Unit) {
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(56.dp))
+        Column { content() }
     }
 }
 

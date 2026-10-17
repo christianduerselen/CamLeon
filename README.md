@@ -92,7 +92,23 @@ GET  /api/status
 POST /api/settings?quality=P1080&audio=true&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=85&acceleration=1000
 POST /api/gimbal/move?yaw=-100..100&pitch=-100..100      POST /api/gimbal/stop
 POST /api/gimbal/home?axis=yaw|pitch                     POST /api/gimbal/home/cancel
+GET  /api/recordings                                     GET  /api/recordings/file?name=…[&download=1]
+POST /api/recordings/delete?name=…
 ```
+
+### Recordings
+
+The browser page `http://<phone-ip>:8080/recordings` (button "Recordings" next to the recording switch)
+lists the files in `Movies/CamLeon` and lets you play them in the browser, download and delete them.
+
+- `GET /api/recordings` → `{"recordings":[{"name","size","modified","durationMs","recording","playable","deletable"}],"totalBytes"}`.
+  `playable: false` marks a file whose recording was cut off (no MP4 index; most players refuse it).
+- `GET /api/recordings/file?name=` serves the MP4 with HTTP range support (seeking, resumable
+  downloads); `download=1` sends it as an attachment. The file being recorded is not served (409).
+- `POST /api/recordings/delete?name=` deletes a file (409 while it is being recorded).
+- Without extra permission Android shows CamLeon only the files it recorded in the current
+  installation. With the "Videos" permission (asked at start) older files are listed and served too,
+  but Android only lets you delete those on the phone (`deletable: false`, delete returns 403).
 
 ### Status: phone health (since 1.1.0)
 

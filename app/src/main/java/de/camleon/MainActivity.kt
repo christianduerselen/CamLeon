@@ -63,7 +63,11 @@ class MainActivity : ComponentActivity() {
                     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { r ->
                         granted = (r[Manifest.permission.CAMERA] == true && r[Manifest.permission.RECORD_AUDIO] == true) || hasMediaPermissions()
                     }
+                    // Asked separately so existing installs (camera already granted) get the question too;
+                    // Android itself stops asking after the user declined twice.
+                    val videoLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
                     if (granted) {
+                        LaunchedEffect(Unit) { if (!hasVideoPermission()) videoLauncher.launch(videoPermission()) }
                         remember {
                             CaptureSession.ensureCameraStarted()
                             CaptureService.start(this@MainActivity)   // foreground: survives screen lock
@@ -120,7 +124,14 @@ class MainActivity : ComponentActivity() {
         add(Manifest.permission.BLUETOOTH_CONNECT)
         add(Manifest.permission.ACCESS_FINE_LOCATION)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+        // Optional: lets the browser's recordings page also list files from before a reinstall.
+        add(videoPermission())
     }.toTypedArray()
+
+    private fun videoPermission() =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_VIDEO else Manifest.permission.READ_EXTERNAL_STORAGE
+
+    private fun hasVideoPermission() = ContextCompat.checkSelfPermission(this, videoPermission()) == PackageManager.PERMISSION_GRANTED
 
     private fun hasMediaPermissions(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&

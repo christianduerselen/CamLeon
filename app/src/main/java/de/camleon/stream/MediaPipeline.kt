@@ -255,6 +255,9 @@ class MediaPipeline(
 
     private var recordPath: String? = null
 
+    /** Absolute path of the file being written right now, null when not recording. */
+    fun currentRecordPath(): String? = if (isRecording()) recordPath else null
+
     /** Make the finished file visible to Gallery/Files (media scanner); no-op if nothing was recorded. */
     private fun publishRecording() {
         val p = recordPath ?: return

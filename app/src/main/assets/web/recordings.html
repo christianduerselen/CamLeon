@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CamLeon · Recordings</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<style>
+  :root { color-scheme: dark; --bg:#111418; --card:#1b1f26; --fg:#e8eaed; --mut:#9aa0a6; --acc:#4f9cff; --err:#ff5c5c; --ok:#3ecf8e; --rec:#ff5c5c; }
+  * { box-sizing: border-box; }
+  html, body { overflow-x:hidden; }
+  body { margin:0; font:15px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+  .wrap { max-width:760px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:8px 0 16px; display:flex; align-items:center; gap:10px; }
+  h1 a { color:var(--mut); text-decoration:none; font-size:15px; font-weight:600; }
+  .card { background:var(--card); border-radius:12px; padding:16px; margin-bottom:14px; min-width:0; }
+  .ctitle { font-size:18px; font-weight:700; margin:0; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .mut { color:var(--mut); font-size:13px; }
+  button, a.btn { padding:7px 12px; border:0; border-radius:8px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; color:#fff; background:#2c323c; text-decoration:none; display:inline-block; touch-action:manipulation; }
+  .start { background:var(--acc); } .stop { background:var(--err); }
+  #langBtn { margin-left:auto; padding:6px 10px; font-size:12px; }
+  .pill { display:inline-block; padding:1px 9px; border-radius:999px; font-size:12px; font-weight:600; background:#2c323c; color:var(--mut); }
+  .pill.rec { background:var(--rec); color:#fff; } .pill.bad { background:#5a3a1a; color:#ffc58a; }
+  .item { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 0; border-top:1px solid #262b34; }
+  .item:first-child { border-top:0; padding-top:0; }
+  .item .t { flex:1 1 220px; min-width:0; } .item .t b { display:block; font-size:15px; overflow-wrap:anywhere; }
+  .item .acts { display:flex; gap:8px; flex-wrap:wrap; }
+  video { width:100%; aspect-ratio:16/9; background:#000; border-radius:8px; display:block; margin-top:10px; }
+  #err { color:var(--err); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><a href="/" data-i18n="back">← Control</a><span data-i18n="title">Recordings</span><button id="langBtn" onclick="toggleLang()">DE</button></h1>
+
+  <div class="card" id="player" style="display:none">
+    <div class="row" style="justify-content:space-between">
+      <b id="playName" style="overflow-wrap:anywhere"></b>
+      <button onclick="closePlayer()" data-i18n="close">Close</button>
+    </div>
+    <video id="video" controls playsinline preload="metadata"></video>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:12px">
+      <div class="ctitle" data-i18n="files">Files</div>
+      <span id="summary" class="mut"></span>
+    </div>
+    <div id="list"><span class="mut">…</span></div>
+    <div id="err"></div>
+  </div>
+  <div class="mut" data-i18n="hint">Play streams the video into the browser; Download saves the file. Files are in Movies/CamLeon on the phone.</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const I18N = {
+  en: {},
+  de: {
+    back: '← Steuerung', title: 'Aufnahmen', close: 'Schließen', files: 'Dateien', play: 'Abspielen', download: 'Download', del: 'Löschen',
+    recordingNow: 'nimmt gerade auf', incomplete: 'unvollständig', none: 'Noch keine Aufnahmen.',
+    total: 'gesamt', free: 'frei', confirmDel: 'Wirklich löschen?', phoneOnly: 'nur am Handy löschbar',
+    incompleteHint: 'Aufnahme wurde nicht sauber beendet — die meisten Player spielen sie nicht ab.',
+    phoneOnlyHint: 'Vor einer Neuinstallation aufgenommen: Android erlaubt das Löschen nur am Handy (Galerie / Eigene Dateien).',
+    hint: 'Abspielen streamt das Video in den Browser, Download speichert die Datei. Auf dem Handy liegen die Dateien in Movies/CamLeon.',
+    errDel: 'Löschen fehlgeschlagen:',
+  }
+};
+const EN = {
+  play: 'Play', download: 'Download', del: 'Delete', recordingNow: 'recording now', incomplete: 'incomplete', none: 'No recordings yet.',
+  total: 'total', free: 'free', confirmDel: 'Delete this file?', phoneOnly: 'delete on the phone only',
+  incompleteHint: 'The recording was not finished properly — most players will not play it.',
+  phoneOnlyHint: 'Recorded before a reinstall: Android allows deleting it on the phone only (Gallery / Files).',
+  errDel: 'Delete failed:',
+};
+let lang = (() => { try { return localStorage.getItem('lang'); } catch (e) { return null; } })() || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en');
+const t = k => (lang === 'de' && I18N.de[k]) || EN[k] || k;
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    if (!el.dataset.en) el.dataset.en = el.textContent;
+    el.textContent = lang === 'de' ? (I18N.de[el.dataset.i18n] || el.dataset.en) : el.dataset.en;
+  });
+  $('langBtn').textContent = lang === 'de' ? 'EN' : 'DE';
+}
+function toggleLang() { lang = lang === 'de' ? 'en' : 'de'; try { localStorage.setItem('lang', lang); } catch (e) {} applyLang(); render(); }
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function size(b) {
+  if (b == null) return '—';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return (i >= 2 ? b.toFixed(i >= 3 ? 2 : 0) : Math.round(b)) + ' ' + u[i];
+}
+function dur(ms) {
+  if (ms == null) return null;
+  const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
+  return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0');
+}
+const when = ms => new Date(ms).toLocaleString(lang === 'de' ? 'de-DE' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const fileUrl = (n, dl) => '/api/recordings/file?name=' + encodeURIComponent(n) + (dl ? '&download=1' : '');
+
+let data = null, phone = null;
+async function load() {
+  try {
+    const [r, s] = await Promise.all([fetch('/api/recordings', { cache: 'no-store' }), fetch('/api/status', { cache: 'no-store' })]);
+    if (!r.ok) throw new Error(r.status + ' ' + await r.text());
+    data = await r.json();
+    phone = s.ok ? (await s.json()).phone : null;
+    $('err').textContent = '';
+  } catch (e) { $('err').textContent = e.message; }
+  render();
+  // While something is being recorded, keep size and state current.
+  clearTimeout(load.timer);
+  load.timer = setTimeout(load, data && data.recordings.some(x => x.recording) ? 5000 : 30000);
+}
+
+function render() {
+  if (!data) return;
+  const list = data.recordings;
+  $('summary').textContent = list.length + ' · ' + size(data.totalBytes) + ' ' + t('total') +
+    (phone && phone.storageFreeBytes != null ? ' · ' + size(phone.storageFreeBytes) + ' ' + t('free') : '');
+  if (!list.length) { $('list').innerHTML = '<span class="mut">' + t('none') + '</span>'; return; }
+  $('list').innerHTML = list.map((f, i) => {
+    const info = [when(f.modified), dur(f.durationMs), size(f.size)].filter(Boolean).join(' · ');
+    const badge = f.recording ? ' <span class="pill rec">● ' + t('recordingNow') + '</span>'
+      : (!f.playable ? ' <span class="pill bad" title="' + esc(t('incompleteHint')) + '">' + t('incomplete') + '</span>' : '');
+    const acts = f.recording ? '' :
+      (f.playable ? '<button class="start" onclick="play(' + i + ')">▶ ' + t('play') + '</button>' : '') +
+      '<a class="btn" href="' + fileUrl(f.name, true) + '" download="' + esc(f.name) + '">⬇ ' + t('download') + '</a>' +
+      (f.deletable ? '<button class="stop" onclick="del(' + i + ')">' + t('del') + '</button>'
+                   : '<span class="mut" title="' + esc(t('phoneOnlyHint')) + '">' + t('phoneOnly') + '</span>');
+    return '<div class="item"><div class="t"><b>' + esc(f.name) + badge + '</b><span class="mut">' + info + '</span></div><div class="acts">' + acts + '</div></div>';
+  }).join('');
+}
+
+function play(i) {
+  const f = data.recordings[i];
+  $('playName').textContent = f.name;
+  $('player').style.display = '';
+  $('video').src = fileUrl(f.name, false);
+  $('video').play().catch(() => {});
+  $('player').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function closePlayer() {
+  const v = $('video'); v.pause(); v.removeAttribute('src'); v.load();
+  $('player').style.display = 'none';
+}
+async function del(i) {
+  const f = data.recordings[i];
+  if (!confirm(t('confirmDel') + '\n\n' + f.name + ' (' + size(f.size) + ')')) return;
+  if ($('playName').textContent === f.name) closePlayer();
+  const r = await fetch('/api/recordings/delete?name=' + encodeURIComponent(f.name), { method: 'POST' });
+  if (!r.ok) $('err').textContent = t('errDel') + ' ' + r.status + ' ' + await r.text();
+  load();
+}
+
+applyLang();
+load();
+</script>
+</body>
+</html>

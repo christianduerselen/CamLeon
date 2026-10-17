@@ -11,6 +11,7 @@ import de.camleon.preview.WebRtcCamera
 import de.camleon.preview.WebRtcVideoSource
 import de.camleon.stream.CaptureSettings
 import de.camleon.stream.MediaPipeline
+import de.camleon.stream.Recordings
 import de.camleon.stream.TrackingSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,7 @@ object CaptureSession {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     lateinit var media: MediaPipeline; private set
+    lateinit var recordings: Recordings; private set
     lateinit var ble: ChameleonBleClient; private set
     lateinit var link: GimbalLink; private set
     lateinit var camera: WebRtcCamera; private set
@@ -82,6 +84,7 @@ object CaptureSession {
         _settings.value = CaptureSettings.load(appContext).let { it.copy(quality = coerceQuality(it.quality)) }
             .also { CaptureSettings.save(appContext, it) }
         media = MediaPipeline(appContext, WebRtcVideoSource(camera)).also { it.updateSettings(_settings.value) }
+        recordings = Recordings(appContext) { media.currentRecordPath() }
         ble = ChameleonBleClient(appContext).also { it.onFrame = ::onGimbalFrame }
         link = GimbalLink(appContext, ble)
         // Whenever the link becomes READY: send the connect handshake, turn on angle reporting
@@ -209,6 +212,11 @@ object CaptureSession {
             }.onFailure { Log.w(TAG, "shutdown: ${it.message}") }
             done()
         }
+    }
+
+    /** Phone health block (also shown in the app's status card): battery, power, thermal, storage. */
+    fun phoneStatus(): JSONObject = _settings.value.let { s ->
+        de.camleon.common.PhoneStatus.toJson(appContext, s.quality.bitrateBps.toLong() + if (s.audioEnabled) AUDIO_BITRATE_BPS else 0L)
     }
 
     fun setStreaming(on: Boolean): Boolean = if (on) media.startStreaming(_settings.value) else { media.stopStreaming(); true }
@@ -533,8 +541,7 @@ object CaptureSession {
                 gimbalNote?.let { put("note", it) }
             })
             // Phone health (battery/power, thermal status, free storage) for remote monitoring.
-            put("phone", de.camleon.common.PhoneStatus.toJson(appContext,
-                s.quality.bitrateBps.toLong() + if (s.audioEnabled) AUDIO_BITRATE_BPS else 0L))
+            put("phone", phoneStatus())
             put("version", BuildConfig.VERSION_NAME); put("debug", BuildConfig.DEBUG)
             put("locks", locks().toJson())
             put("modes", de.camleon.stream.ChameleonModes.toJson())
