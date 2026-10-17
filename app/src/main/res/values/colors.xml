@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- launcher icon background: deep indigo, matches the app's purple theme -->
+    <color name="ic_launcher_background">#1E1B3A</color>
+</resources>

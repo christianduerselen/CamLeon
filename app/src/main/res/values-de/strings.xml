@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dim_hint">CamLeon läuft · zum Aufwecken tippen</string>
+    <string name="notif_channel">CamLeon Aufnahme</string>
+    <string name="notif_channel_desc">Wird angezeigt, solange CamLeon Kamera und Gimbal-Verbindung am Laufen hält</string>
+    <string name="notif_title">CamLeon läuft</string>
+    <string name="notif_text_plain">Kamera und Gimbal-Verbindung aktiv</string>
+    <string name="notif_text_url">Browser-Steuerung: %1$s</string>
+    <string name="perm_text">Kamera und Mikrofon werden für Livebild, Streaming und Aufnahme benötigt, Bluetooth für den Gimbal.</string>
+    <string name="perm_button">Berechtigungen erteilen</string>
+
+    <string name="overlay_track">◎ TRACK</string>
+    <string name="overlay_live">● LIVE %1$d kbit/s</string>
+    <string name="overlay_rec">● REC</string>
+    <string name="browser_none">Browser-Steuerung: kein Netzwerk</string>
+    <string name="browser_url">Browser-Steuerung: %1$s\n(QR-Code antippen zum Vergrößern)</string>
+    <string name="tracking">Tracking</string>
+    <string name="streaming">Streaming</string>
+    <string name="recording">Aufnahme</string>
+    <string name="st_sdk_running">Gimbal-SDK läuft</string>
+    <string name="st_starting">startet…</string>
+    <string name="st_idle">bereit</string>
+    <string name="st_connect_first">zuerst den Gimbal verbinden</string>
+    <string name="st_set_url">RTMP-URL in den Einstellungen eintragen</string>
+    <string name="st_connecting">verbinde…</string>
+    <string name="st_live">live · %1$d kbit/s</string>
+    <string name="st_error">Fehler: %1$s</string>
+    <string name="st_recording_to">nimmt auf → %1$s</string>
+    <string name="st_saves_to">speichert nach Movies/ChameleonCapture (in der Galerie sichtbar)</string>
+    <string name="settings_show">Einstellungen ▼</string>
+    <string name="settings_hide">Einstellungen ausblenden ▲</string>
+
+    <string name="gimbal">Gimbal</string>
+    <string name="gimbal_connected">Gimbal verbunden</string>
+    <string name="gimbal_named">Gimbal: %1$s</string>
+    <string name="connected">verbunden</string>
+    <string name="disconnect">Trennen</string>
+    <string name="connect_now">Jetzt verbinden</string>
+    <string name="connect">Verbinden</string>
+    <string name="auto_connect">Automatisch verbinden</string>
+    <string name="forget">Vergessen</string>
+    <string name="scan">Suchen</string>
+    <string name="last_gimbal">(zuletzt: %1$s)</string>
+    <string name="no_gimbal_remembered">(kein Gimbal gemerkt)</string>
+    <string name="no_name">(ohne Namen)</string>
+
+    <string name="to_zero">→ 0°</string>
+    <string name="axis_yaw">Schwenk</string>
+    <string name="axis_pitch">Neigung</string>
+    <string name="not_connected">(nicht verbunden)</string>
+    <string name="driving_to_zero">fährt auf 0°…</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="speed">Geschwindigkeit %1$d</string>
+    <string name="pad_hint">0° = Richtung beim letzten Tracking-Start. Taste gedrückt halten zum Schwenken/Neigen, auch als Override während des Trackings.</string>
+
+    <string name="locked_while">gesperrt während %1$s</string>
+    <string name="tracking_runs">Tracking läuft</string>
+    <string name="rot_angle">Kameradrehwinkel %1$d°  (60–150)</string>
+    <string name="accel">Beschleunigung %1$d  (200–1000)</string>
+    <string name="track_auto">Tracking beim App-Start automatisch starten (sobald der Gimbal verbunden ist)</string>
+    <string name="angle_hint">Der Winkel gilt ± um die Richtung, in die die Kamera beim Tracking-Start zeigt: auf die Mittellinie zielen, dann Tracking einschalten.</string>
+    <string name="rtmp_url">RTMP-URL</string>
+    <string name="save">Speichern</string>
+    <string name="stream_auto">Streaming beim App-Start automatisch starten</string>
+    <string name="rec_auto">Aufnahme beim App-Start automatisch starten</string>
+    <string name="files_hint">Dateien landen im öffentlichen Ordner Movies/ChameleonCapture (Galerie, Eigene Dateien, USB).</string>
+    <string name="video_section">Video (Stream + Aufnahme)</string>
+    <string name="audio">Audio</string>
+    <string name="display_section">Handy-Display</string>
+    <string name="scr_on">an lassen</string>
+    <string name="scr_dim">abdunkeln (Tippen weckt)</string>
+    <string name="scr_timeout">System-Timeout</string>
+    <string name="display_hint">Kamera, Stream und Gimbal laufen auch mit dunklem oder ausgeschaltetem Display weiter (Vordergrunddienst).</string>
+
+    <string name="msg_preparing">Gimbal wird vorbereitet…</string>
+    <string name="msg_not_connected_tracking">Gimbal nicht verbunden — Tracking startet, sobald verbunden</string>
+    <string name="msg_settle">warte, bis der Gimbal still steht…</string>
+    <string name="msg_no_confirm">Gimbal hat den SDK-Start nicht bestätigt — bitte erneut versuchen</string>
+    <string name="msg_gimbal_not_connected">Gimbal nicht verbunden</string>
+    <string name="msg_no_angle">noch keine Gimbal-Winkel</string>
+    <string name="msg_rebase_failed">Mitte beim Start NICHT neu gesetzt (SDK-Yaw %1$s°) — Tracking aus- und wieder einschalten</string>
+    <string name="phase_ready">verbunden</string>
+    <string name="phase_idle">bereit</string>
+    <string name="phase_bt_off">Bluetooth aus</string>
+    <string name="phase_searching">suche Gimbal</string>
+    <string name="phase_paused">vom Nutzer getrennt (automatisches Verbinden pausiert)</string>
+    <string name="phase_connecting_to">verbinde mit %1$s</string>
+    <string name="phase_waiting">warte %1$s</string>
+    <string name="sport_basketball">Basketball</string>
+    <string name="sport_soccer">Fußball</string>
+    <string name="sport_handball">Handball</string>
+    <string name="sport_ice_hockey">Eishockey</string>
+    <string name="sport_lacrosse">Lacrosse</string>
+    <string name="sport_american_football">American Football</string>
+    <string name="sport_volleyball">Volleyball</string>
+    <string name="var_full_high">Ganzes Feld · Kamera erhöht</string>
+    <string name="var_full_low">Ganzes Feld · Kamera niedrig</string>
+    <string name="var_half_high">Halbes Feld · Kamera erhöht</string>
+    <string name="var_half_low">Halbes Feld · Kamera niedrig</string>
+    <string name="var_full">Ganzes Feld</string>
+    <string name="var_half">Halbes Feld</string>
+    <string name="age_adult">ab 14 Jahren</string>
+    <string name="age_youth">unter 14</string>
+</resources>

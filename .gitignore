@@ -1,0 +1,23 @@
+# Gradle / Android Studio
+.gradle/
+.kotlin/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing — never commit keys or passwords
+keystore.properties
+*.jks
+*.keystore
+
+# OS
+Thumbs.db
+.DS_Store
+
+# temp files from patch scripts
+*.tmp

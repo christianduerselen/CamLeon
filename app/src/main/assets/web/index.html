@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CamLeon</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="CamLeon">
+<style>
+  :root { color-scheme: dark; --bg:#111418; --card:#1b1f26; --fg:#e8eaed; --mut:#9aa0a6; --acc:#4f9cff; --err:#ff5c5c; --ok:#3ecf8e; --rec:#ff5c5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+  .wrap { max-width:760px; margin:0 auto; padding:16px; }
+  html, body { overflow-x:hidden; } .wrap, .card, .grid > div { min-width:0; } select, input[type=text] { max-width:100%; min-width:0; }
+  h1 { font-size:20px; margin:8px 0 16px; } h2 { font-size:14px; margin:0 0 10px; color:var(--mut); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .card { background:var(--card); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .card.ok { outline:1px solid var(--ok); }
+  .card.slim { padding:6px 14px; margin-bottom:10px; } .card.slim #linktitle { font-size:13px; font-weight:600; color:var(--ok); }
+  label { display:block; font-size:13px; color:var(--mut); margin:10px 0 4px; }
+  input[type=text], select { width:100%; padding:10px; border-radius:8px; border:1px solid #2c323c; background:#0e1116; color:var(--fg); font:inherit; }
+  input[type=text] { font-family:ui-monospace,monospace; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  button { padding:10px 14px; border:0; border-radius:8px; font:inherit; font-weight:600; cursor:pointer; color:#fff; background:#2c323c; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+  .start { background:var(--acc); } .stop { background:var(--err); } .sm { padding:7px 12px; font-size:13px; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; font-weight:600; background:#2c323c; color:var(--mut); }
+  .s-live,.s-ready,.s-on { background:var(--ok); color:#06301f; } .s-error { background:var(--err); color:#fff; } .s-connecting,.s-discovering,.s-scanning { background:#4f9cff; color:#fff; }
+  .mut { color:var(--mut); font-size:13px; }
+  .sw { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid #262b34; }
+  .sw:first-of-type { border-top:0; padding-top:0; }
+  .sw .t { flex:1; } .sw .t b { display:block; font-size:16px; } .sw .t span { font-size:13px; color:var(--mut); }
+  .sw.dis { opacity:.55; }
+  .toggle { position:relative; width:52px; height:30px; flex:0 0 auto; }
+  .toggle input { opacity:0; width:0; height:0; }
+  .toggle i { position:absolute; inset:0; background:#3a414d; border-radius:30px; transition:.2s; }
+  .toggle i:before { content:""; position:absolute; width:24px; height:24px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s; }
+  .toggle input:checked + i { background:var(--ok); } .toggle input:checked + i:before { transform:translateX(22px); }
+  .toggle.rec input:checked + i { background:var(--rec); }
+  .toggle input:disabled + i { opacity:.4; }
+  .grid { display:grid; grid-template-columns:1fr; gap:0 16px; }
+  .ctitle { font-size:18px; font-weight:700; color:var(--fg); margin:0 0 14px; }
+  .grid h2 { color:#c9cfd6; font-size:13px; }
+  .grid h2[style*="margin-top"] { border-top:1px solid #2c323c; padding-top:16px; margin-top:20px !important; }
+  .pos { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-around; gap:8px 16px; margin-top:12px; font-size:15px; }
+  .pos .axis { display:flex; align-items:center; gap:8px; }
+  .pos .ind { color:var(--mut); font-size:12px; letter-spacing:1px; }
+  .pos .nm { color:var(--mut); font-size:13px; }
+  .pos b { font-family:ui-monospace,monospace; font-size:18px; min-width:56px; text-align:right; }
+  .pos .sm { padding:6px 10px; }
+  button:disabled { opacity:.4; cursor:default; }
+  .ops { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .padwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  #langBtn { float:right; font-size:12px; padding:6px 10px; }
+  .chk { display:flex; align-items:center; gap:8px; margin:8px 0; font-size:14px; } .chk input { width:18px; height:18px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; } td { padding:6px 4px; border-top:1px solid #262b34; vertical-align:top; }
+  pre { margin:0; font:12px/1.4 ui-monospace,monospace; white-space:pre-wrap; word-break:break-all; max-height:300px; overflow:auto; background:#0e1116; border-radius:8px; padding:10px; }
+  .tx { color:#8ab4f8; } .rx { color:#81c995; } .ev { color:var(--mut); } .rxc { color:#5f6368; } .bad { color:var(--err); }
+  details summary { cursor:pointer; color:var(--mut); font-weight:600; font-size:14px; }
+  video { width:100%; aspect-ratio:16/9; background:#000; border-radius:8px; display:block; }
+  .pad { display:grid; grid-template-columns:repeat(3,56px); grid-template-rows:repeat(3,56px); gap:6px; }
+  .pad, .pad * { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  .pad button { font-size:22px; padding:0; touch-action:none; }
+  .pad .c { background:#0e1116; color:var(--mut); font-size:28px; cursor:default; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+  .pad .c.on { color:#fff; background:#2c323c; }
+  .ang { font-family:ui-monospace,monospace; font-size:14px; }
+  .refs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
+  .refs div { background:#0e1116; border-radius:8px; padding:8px; text-align:center; }
+  .refs b { display:block; font-size:12px; color:var(--mut); font-weight:600; } .refs span { font-family:ui-monospace,monospace; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><img src="/favicon.svg" alt="" style="width:30px;height:30px;vertical-align:-7px;margin-right:9px;border-radius:7px">CamLeon <span id="err" class="mut" style="color:var(--err);font-weight:400;font-size:13px"></span><button class="sm" id="langBtn" onclick="toggleLang()">DE</button></h1>
+
+  <!-- 1. Gimbal link -->
+  <div class="card" id="linkcard">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <b id="linktitle" style="font-size:18px">Gimbal</b>
+        <div id="linkinfo" class="mut">…</div>
+      </div>
+      <span class="row">
+        <label class="chk" style="margin:0"><input type="checkbox" id="autoconn" onchange="post('/api/gimbal/autoconnect?on='+this.checked).then(refresh)"> <span data-i18n="autoconnect">auto-connect</span></label>
+        <button class="sm" id="btnConnect" data-i18n="connectNow" onclick="post('/api/gimbal/reconnect').then(refresh)">Connect now</button>
+        <button class="sm stop" id="btnDisc" data-i18n="disconnect" onclick="post('/api/ble/disconnect').then(refresh)" style="display:none">Disconnect</button>
+        <button class="sm" id="btnScan" data-i18n="scan" onclick="post('/api/ble/scan')">Scan</button>
+        <button class="sm" id="btnForget" data-i18n="forget" onclick="post('/api/gimbal/forget').then(refresh)" style="display:none">Forget</button>
+      </span>
+    </div>
+    <table id="found"></table>
+  </div>
+
+  <!-- 2. Live preview (auto-started) + position -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div class="ctitle" style="margin:0" data-i18n="live">Live preview</div>
+      <span class="row"><span id="pvinfo" class="mut"></span>
+        <button class="sm start" id="pvstart" data-i18n="startPreview" onclick="manualStartPreview()">Start preview</button>
+        <button class="sm stop" id="pvstop" data-i18n="stop" onclick="stopPreview()" style="display:none">Stop</button></span>
+    </div>
+    <video id="pv" autoplay playsinline muted style="margin-top:8px"></video>
+    <div id="pvmsg" class="mut" style="margin-top:8px"></div>
+  </div>
+
+  <!-- 2b. Gimbal: status · manual control · operations · speed -->
+  <div class="card">
+    <div class="ctitle" data-i18n="gimbalCard">Gimbal</div>
+    <div class="pos">
+      <span class="axis" title="yaw"><span class="ind">&#9664;&#9654;</span><span class="nm" data-i18n="yaw">Pan</span><b id="gyaw">—</b></span>
+      <span class="axis" title="pitch"><span class="ind">&#9650;&#9660;</span><span class="nm" data-i18n="pitch">Tilt</span><b id="gpitch">—</b></span>
+    </div>
+    <div class="padwrap" style="margin-top:12px">
+      <div class="pad">
+        <span></span><button data-yaw="0" data-pitch="1">▲</button><span></span>
+        <button data-yaw="-1" data-pitch="0">◀</button><div class="c" id="padc">&#9679;</div><button data-yaw="1" data-pitch="0">▶</button>
+        <span></span><button data-yaw="0" data-pitch="-1">▼</button><span></span>
+      </div>
+    </div>
+    <div class="ops">
+      <button class="sm" id="homeYaw" onclick="post('/api/gimbal/home?axis=yaw').then(refresh)"><span data-i18n="yaw">Pan</span> → 0°</button>
+      <button class="sm" id="homePitch" onclick="post('/api/gimbal/home?axis=pitch').then(refresh)"><span data-i18n="pitch">Tilt</span> → 0°</button>
+    </div>
+    <div class="ops" id="opsStatus" style="align-items:center"><span class="mut"><span id="gsrc"></span><span id="gnote"></span> <span id="homing"></span></span>
+      <button class="sm stop" id="homeCancel" data-i18n="cancel" onclick="post('/api/gimbal/home/cancel').then(refresh)" style="display:none">Cancel</button></div>
+    <label><span data-i18n="speed">Speed</span> <span id="spdV">50</span></label>
+    <input type="range" id="spd" min="10" max="100" value="50" oninput="spdV.textContent=this.value" style="width:100%">
+  </div>
+
+  <!-- 3. The three switches -->
+  <div class="card">
+    <div class="sw" id="rowTrack">
+      <div class="t"><b data-i18n="tracking">Tracking</b><span id="stTrack">…</span></div>
+      <label class="toggle"><input type="checkbox" id="swTrack" onchange="toggle('tracking', this)"><i></i></label>
+    </div>
+    <div class="sw">
+      <div class="t"><b data-i18n="streaming">Streaming</b><span id="stStream">…</span></div>
+      <label class="toggle"><input type="checkbox" id="swStream" onchange="toggle('streaming', this)"><i></i></label>
+    </div>
+    <div class="sw">
+      <div class="t"><b data-i18n="recording">Recording</b><span id="stRec">…</span></div>
+      <label class="toggle rec"><input type="checkbox" id="swRec" onchange="toggle('recording', this)"><i></i></label>
+    </div>
+  </div>
+
+  <!-- 4. Settings: one block per function; a running function locks its block -->
+  <div class="card">
+    <div class="ctitle" data-i18n="settings">Settings</div>
+    <div class="grid">
+      <div>
+        <h2><span data-i18n="video">Video · stream + recording</span> <span id="lkVideo" class="mut"></span></h2>
+        <label data-i18n="quality">Quality</label>
+        <select id="quality" onchange="setSetting({quality:this.value})"></select>
+        <div id="fpsnote" class="mut" style="margin:4px 0"></div>
+        <div class="chk"><input type="checkbox" id="audio" onchange="setSetting({audio:this.checked})"><span data-i18n="audio">Audio</span></div>
+
+        <h2 style="margin-top:16px"><span data-i18n="tracking">Tracking</span> <span id="lkTracking" class="mut"></span></h2>
+        <label data-i18n="sport">Sport</label>
+        <select id="tSport" onchange="setSetting({sport:this.value})"></select>
+        <div id="tVariantRow"><label data-i18n="variant">Field / camera</label>
+        <select id="tVariant" onchange="setSetting({variant:this.value})"></select></div>
+        <div id="tAgeRow"><label data-i18n="age">Age group</label>
+        <select id="tAge" onchange="setSetting({youth:this.value})">
+          <option value="false" data-i18n="ageAdult">14 years and older</option>
+          <option value="true" data-i18n="ageYouth">Under 14</option>
+        </select></div>
+        <label><span data-i18n="rotAngle">Camera rotation angle</span> <span id="yawRangeV"></span>° (60–150)</label>
+        <input type="range" id="yawRange" min="60" max="150" step="5" oninput="yawRangeV.textContent=this.value" onchange="setSetting({yawRange:this.value})" style="width:100%">
+        <label><span data-i18n="accel">Acceleration</span> <span id="accelV"></span> (200–1000)</label>
+        <input type="range" id="accel" min="200" max="1000" step="50" oninput="accelV.textContent=this.value" onchange="setSetting({acceleration:this.value})" style="width:100%">
+        <div class="chk"><input type="checkbox" id="trackAuto" onchange="setSetting({trackingAutoStart:this.checked})"><span data-i18n="trackAuto">Start tracking automatically at app start (once the gimbal connects)</span></div>
+        <div class="mut" data-i18n="angleHint">The angle is ± around the direction the camera faces when tracking starts: aim at the centre line, then switch tracking on.</div>
+
+
+      </div>
+      <div>
+        <h2 style="margin-top:16px"><span data-i18n="streaming">Streaming</span> <span id="lkStreaming" class="mut"></span></h2>
+        <label>RTMP URL</label>
+        <input id="url" type="text" placeholder="rtmp://server/app/key" onchange="setSetting({url:this.value.trim()})" />
+        <div class="chk"><input type="checkbox" id="streamAuto" onchange="setSetting({streamAutoStart:this.checked})"><span data-i18n="streamAuto">Start streaming automatically at app start</span></div>
+
+        <h2 style="margin-top:16px"><span data-i18n="recording">Recording</span> <span id="lkRecording" class="mut"></span></h2>
+        <div class="chk"><input type="checkbox" id="recAuto" onchange="setSetting({recordAutoStart:this.checked})"><span data-i18n="recAuto">Start recording automatically at app start</span></div>
+        <div class="mut" data-i18n="filesHint">Files: public Movies/ChameleonCapture (Gallery, Files app, USB)</div>
+
+        <h2 style="margin-top:16px" data-i18n="display">Phone display</h2>
+        <select id="screenMode" onchange="setSetting({screenMode:this.value})">
+          <option value="ON" data-i18n="scrOn">keep screen on</option>
+          <option value="DIM" data-i18n="scrDim">dim: black screen (tap on the phone wakes it)</option>
+          <option value="TIMEOUT" data-i18n="scrTimeout">system timeout: screen turns off by itself</option>
+        </select>
+        <div class="mut" style="margin:4px 0" data-i18n="displayHint">Camera, stream and gimbal keep running with the phone screen dark or off.</div>
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Protocol tools + log: developer mode only (open the page with ?dev) -->
+  <div class="card" id="devcard" style="display:none">
+    <details><summary>Protocol tools <span id="blestate" class="pill">…</span> <span id="mtu" class="mut"></span></summary>
+      <label>Send opcode + payload (hex) — header, length and CRC are added</label>
+      <div class="row">
+        <input id="op" type="text" placeholder="opcode e.g. 0x77" style="flex:1" />
+        <input id="payload" type="text" placeholder="payload hex e.g. 01" style="flex:2" />
+        <button class="sm start" onclick="sendOp()">Send</button>
+      </div>
+      <label>Send complete raw frame (hex, incl. AA 55 … CRC)</label>
+      <div class="row">
+        <input id="raw" type="text" placeholder="AA 55 01 00 77 xx xx" style="flex:3" />
+        <button class="sm start" onclick="sendRaw()">Send raw</button>
+      </div>
+      <label>CRC start value <span id="crcinfo" class="mut"></span></label>
+      <div class="row">
+        <button class="sm" onclick="crcInit('0x0000')">0x0000</button>
+        <button class="sm" onclick="crcInit('0xFFFF')">0xFFFF</button>
+        <button class="sm" onclick="crcInit('0x1D0F')">0x1D0F</button>
+      </div>
+    </details>
+    <div class="row" style="justify-content:space-between;margin-top:12px">
+      <div class="ctitle" style="margin:0">Protocol log</div>
+      <span class="row">
+        <label class="chk" style="margin:0"><input id="showchunks" type="checkbox"> raw chunks</label>
+        <button class="sm" onclick="post('/api/ble/log/clear').then(refreshLog)">Clear</button>
+      </span>
+    </div>
+    <pre id="log"></pre>
+  </div>
+</div>
+
+<div id="ver" class="mut" style="text-align:center;margin:4px 0 24px;font-size:12px"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = v => (v == null ? '—' : Number(v).toFixed(1));
+
+// ---- i18n: static texts via data-i18n, dynamic ones via t(); server messages via tr() ----
+const I18N = {
+  en: {
+    sp_BASKETBALL: 'Basketball', sp_SOCCER: 'Soccer', sp_HANDBALL: 'Handball', sp_ICE_HOCKEY: 'Ice hockey', sp_LACROSSE: 'Lacrosse',
+    sp_AMERICAN_FOOTBALL: 'American football', sp_VOLLEYBALL: 'Volleyball',
+    var_full_high: 'Full court · raised camera', var_full_low: 'Full court · low camera', var_half_high: 'Half court · raised camera',
+    var_half_low: 'Half court · low camera', var_full: 'Full field', var_half: 'Half field', ageAdult: '14 years and older', ageYouth: 'Under 14',
+    pv_new: 'starting…', pv_connecting: 'connecting…', pv_connected: 'live', pv_disconnected: 'interrupted', pv_failed: 'failed', pv_closed: 'closed',
+    pv_nopath: 'no video path', pv_nopath_title: 'No video path.',
+    pv_nopath_text: 'The browser cannot reach the phone directly. Browser and phone must be in the same network.',
+    pv_failed: 'Preview failed:',
+  },
+  de: {
+    sport: 'Sportart', variant: 'Feld / Kamera', age: 'Altersgruppe',
+    sp_BASKETBALL: 'Basketball', sp_SOCCER: 'Fußball', sp_HANDBALL: 'Handball', sp_ICE_HOCKEY: 'Eishockey', sp_LACROSSE: 'Lacrosse',
+    sp_AMERICAN_FOOTBALL: 'American Football', sp_VOLLEYBALL: 'Volleyball',
+    var_full_high: 'Ganzes Feld · Kamera erhöht', var_full_low: 'Ganzes Feld · Kamera niedrig', var_half_high: 'Halbes Feld · Kamera erhöht',
+    var_half_low: 'Halbes Feld · Kamera niedrig', var_full: 'Ganzes Feld', var_half: 'Halbes Feld', ageAdult: 'ab 14 Jahren', ageYouth: 'unter 14',
+    autoconnect: 'automatisch verbinden', connectNow: 'Jetzt verbinden', disconnect: 'Trennen', scan: 'Suchen', forget: 'Vergessen',
+    live: 'Livebild', startPreview: 'Vorschau starten', stop: 'Stopp', yaw: 'Schwenk', pitch: 'Neigung', cancel: 'Abbrechen',
+    pv_new: 'startet…', pv_connecting: 'verbinde…', pv_connected: 'live', pv_disconnected: 'unterbrochen', pv_closed: 'beendet',
+    pv_nopath: 'kein Videoweg', pv_nopath_title: 'Kein Videoweg.',
+    pv_nopath_text: 'Der Browser erreicht das Handy nicht direkt. Browser und Handy müssen im selben Netzwerk sein.',
+    pv_failed: 'Vorschau fehlgeschlagen:',
+    manual: 'Gimbal · manuell / Override', holdHint: 'Taste gedrückt halten (oder Pfeiltasten) · auch während des Trackings als Override', speed: 'Geschwindigkeit',
+    tracking: 'Tracking', streaming: 'Streaming', recording: 'Aufnahme', settings: 'Einstellungen', mode: 'Modus',
+    modeBasketball: 'Basketball', modeSoccer: 'Fußball', modeSingle: 'Einzelperson', modeGroup: 'Gruppe / frei',
+    rotAngle: 'Kameradrehwinkel', accel: 'Beschleunigung', trackAuto: 'Tracking beim App-Start automatisch starten (sobald der Gimbal verbunden ist)',
+    angleHint: 'Der Winkel gilt ± um die Richtung, in die die Kamera beim Tracking-Start zeigt: auf die Mittellinie zielen, dann Tracking einschalten.',
+    display: 'Handy-Display', scrOn: 'Display an lassen', scrDim: 'abdunkeln: schwarzer Bildschirm (Tippen am Handy weckt es)', scrTimeout: 'System-Timeout: Display schaltet sich selbst ab',
+    displayHint: 'Kamera, Stream und Gimbal laufen auch mit dunklem oder ausgeschaltetem Display weiter.',
+    streamAuto: 'Streaming beim App-Start automatisch starten', recAuto: 'Aufnahme beim App-Start automatisch starten',
+    filesHint: 'Dateien: öffentlicher Ordner Movies/ChameleonCapture (Galerie, Eigene Dateien, USB)', video: 'Video · Stream + Aufnahme', quality: 'Qualität', audio: 'Audio',
+    // dynamic
+    gimbal: 'Gimbal', last: 'zuletzt', noRemembered: 'kein Gimbal gemerkt', connect: 'Verbinden', noName: '(ohne Namen)',
+    sdkRunning: 'Gimbal-SDK läuft', starting: 'startet…', idle: 'bereit', connectFirst: 'zuerst den Gimbal verbinden',
+    liveAt: 'live', connecting: 'verbinde…', error: 'Fehler', setUrl: 'unten eine RTMP-URL eintragen', recordingTo: 'nimmt auf →', savesTo: 'speichert nach Movies/ChameleonCapture (Galerie)',
+    fromSdk: '(vom Tracking-SDK)', notConnected: 'nicht verbunden', driving: 'fährt auf 0°…', lockedWhile: 'gesperrt während', trackingRuns: 'Tracking läuft',
+    cameraMax: 'Kamera liefert bei dieser Auflösung höchstens', fpsStreaming: 'fps → Stream', cameraCapture: 'Kameraaufnahme',
+    // server phrases
+    'ready': 'verbunden', 'idle ': 'bereit', 'bluetooth off': 'Bluetooth aus', 'searching for gimbal': 'suche Gimbal',
+    'disconnected by user (auto-connect paused)': 'vom Nutzer getrennt (automatisches Verbinden pausiert)',
+    'preparing gimbal…': 'Gimbal wird vorbereitet…', 'waiting for the gimbal to settle…': 'warte, bis der Gimbal still steht…',
+    'gimbal did not confirm SDK start — try again': 'Gimbal hat den SDK-Start nicht bestätigt — bitte erneut versuchen',
+    'gimbal not connected — tracking will apply once connected': 'Gimbal nicht verbunden — Tracking startet, sobald verbunden',
+    'gimbal not connected': 'Gimbal nicht verbunden', 'no gimbal angle yet': 'noch keine Gimbal-Winkel',
+  }
+};
+let lang = (() => { try { return localStorage.getItem('lang'); } catch (e) { return null; } })() || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en');
+const t = k => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+// server-side status strings: exact match, "connecting to X", "waiting (Ns)", "centre NOT re-based …"
+function tr(msg) {
+  if (!msg || lang === 'en') return msg || '';
+  if (I18N.de[msg]) return I18N.de[msg];
+  if (msg.startsWith('connecting to ')) return 'verbinde mit ' + msg.slice(14);
+  if (msg.startsWith('waiting (')) return 'warte ' + msg.slice(8);
+  if (msg.startsWith('centre NOT re-based')) return msg.replace('centre NOT re-based at start', 'Mitte beim Start NICHT neu gesetzt').replace('switch tracking off and on again', 'Tracking aus- und wieder einschalten');
+  if (msg.startsWith('reconnecting: ')) return 'verbinde neu: ' + msg.slice(14);
+  return msg;
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (v !== el.dataset.i18n || lang === 'en') el.textContent = lang === 'en' ? (el.dataset.en || el.textContent) : v; });
+  $('langBtn').textContent = lang === 'de' ? 'EN' : 'DE';
+}
+function toggleLang() { modesSig = ''; lang = lang === 'de' ? 'en' : 'de'; try { localStorage.setItem('lang', lang); } catch (e) {} applyLang(); refresh(); }
+// remember the English originals so switching back works
+document.querySelectorAll('[data-i18n]').forEach(el => el.dataset.en = el.textContent);
+applyLang();
+
+async function api(path, method='GET') {
+  const r = await fetch(path, { method });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json().catch(() => ({}));
+}
+function post(path) { return api(path, 'POST').catch(e => { $('err').textContent = e.message; }); }
+
+async function toggle(what, el) {
+  const res = await post(`/api/${what}?on=${el.checked}`);
+  if (res && res.ok === false) { el.checked = !el.checked; }
+  refresh();
+}
+function setSetting(obj) {
+  const q = Object.entries(obj).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  return post('/api/settings?' + q).then(refresh);
+}
+// ---- tracking mode selects (sport → variant → age), filled from status.modes ----
+const sportName = id => t('sp_' + id);
+const variantName = k => t('var_' + k) !== 'var_' + k ? t('var_' + k) : k.replace('v', ' v ');
+function modeLabel(tr, modes) {
+  const sp = modes.find(m => m.id === tr.sport); const v = sp && sp.variants.find(x => x.key === tr.variant);
+  const parts = [sportName(tr.sport)];
+  if (sp && sp.variants.length > 1) parts.push(variantName(tr.variant));
+  if (v && v.youth != null) parts.push(t(tr.youth ? 'ageYouth' : 'ageAdult'));
+  return parts.join(' · ');
+}
+let modesSig = '';
+function fillModeSelects(tr, modes) {
+  const sig = lang + '|' + tr.sport + '|' + modes.length;
+  if (sig !== modesSig) {
+    modesSig = sig;
+    $('tSport').innerHTML = modes.map(m => `<option value="${m.id}">${sportName(m.id)}</option>`).join('');
+    const sp = modes.find(m => m.id === tr.sport) || { variants: [] };
+    $('tVariant').innerHTML = sp.variants.map(v => `<option value="${v.key}">${variantName(v.key)}</option>`).join('');
+    $('tVariantRow').style.display = sp.variants.length > 1 ? '' : 'none';
+  }
+  const sp = modes.find(m => m.id === tr.sport); const v = sp && sp.variants.find(x => x.key === tr.variant);
+  $('tAgeRow').style.display = (v && v.youth != null) ? '' : 'none';
+  $('tSport').value = tr.sport; $('tVariant').value = tr.variant; $('tAge').value = String(!!tr.youth);
+  $('tAge').options[0].textContent = t('ageAdult'); $('tAge').options[1].textContent = t('ageYouth');
+}
+function pill(el, text, cls) { el.textContent = text; el.className = 'pill ' + (cls || ''); }
+const focused = () => document.activeElement && document.activeElement.id;
+
+async function refresh() {
+  try {
+    const s = await api('/api/status');
+    maybeStartDev(s);
+    $('ver').textContent = 'CamLeon ' + (s.version || '') + (s.debug ? ' · debug' : '');
+    $('err').textContent = s.lastError || '';
+    const st = s.streaming, rc = s.recording, tr = s.tracking, cfg = s.settings, g = s.gimbal || {}, b = s.ble || {}, L = s.link || {};
+    const ready = b.state === 'ready';
+    // 1. gimbal link — full card while connecting, a slim one-liner once connected
+    $('linkcard').className = 'card' + (ready ? ' ok slim' : '');
+    $('linktitle').textContent = ready ? '● ' + t('gimbal') + ': ' + (b.name || b.address) : t('gimbal');
+    const rem = L.remembered ? ` (${t('last')}: ${L.remembered.name || L.remembered.address})` : ` (${t('noRemembered')})`;
+    $('linkinfo').textContent = ready ? '' : tr(L.phase || '') + rem;
+    $('linkinfo').style.display = ready ? 'none' : '';
+    $('autoconn').parentElement.style.display = ready ? 'none' : '';
+    $('btnScan').style.display = ready ? 'none' : '';
+    $('autoconn').checked = !!L.autoConnect;
+    $('btnConnect').style.display = ready ? 'none' : ''; $('btnDisc').style.display = ready ? '' : 'none';
+    $('btnForget').style.display = (L.remembered && !ready) ? '' : 'none';
+    $('found').innerHTML = ready ? '' : (b.found || []).map(d =>
+      `<tr><td>${d.name || t('noName')}${d.gen2 ? ' <span class="pill s-ready">AE30</span>' : ''}</td><td class="mut">${d.address}</td><td class="mut">${d.rssi} dBm</td>` +
+      `<td style="text-align:right"><button class="sm start" onclick="post('/api/ble/connect?address=${d.address}')">${t('connect')}</button></td></tr>`).join('');
+    pill($('blestate'), b.state || '?', 's-' + (b.state || '')); $('mtu').textContent = ready ? ('MTU ' + b.mtu) : '';
+    // 3. switches (tracking needs the gimbal)
+    $('rowTrack').className = 'sw' + (ready ? '' : ' dis');
+    $('swTrack').disabled = !ready && !tr.on; $('swTrack').checked = tr.on;
+    const modeName = modeLabel(cfg.tracking, s.modes || []);
+    $('stTrack').textContent = (ready ? modeName + (tr.gimbalActive ? ' · ' + t('sdkRunning') : (tr.on ? ' · ' + t('starting') : ' · ' + t('idle'))) : t('connectFirst')) + (tr.note ? ' · ' + tr(tr.note) : '');
+    $('swStream').checked = st.on || st.state === 'connecting';
+    $('swStream').disabled = !(cfg.rtmpUrl && cfg.rtmpUrl.length) && !st.on;
+    $('stStream').textContent = st.state === 'live' ? `${t('liveAt')} · ${st.bitrateKbps} kbps` : st.state === 'connecting' ? t('connecting')
+      : st.state === 'error' ? (t('error') + ': ' + tr(st.error)) : (cfg.rtmpUrl || t('setUrl'));
+    $('swRec').checked = rc.on;
+    $('stRec').textContent = rc.on ? (t('recordingTo') + ' ' + (rc.file || '').split('/').pop()) : t('savesTo');
+    // gimbal angles + pan range
+    $('gyaw').textContent = fmt(g.yaw) + '°'; $('gpitch').textContent = fmt(g.pitch) + '°';
+    $('gnote').textContent = g.note ? ' · ' + tr(g.note) : (ready ? '' : ' · ' + t('notConnected'));
+    $('gsrc').textContent = g.angleSource === 'sdk log' ? t('fromSdk') : '';
+    $('homing').textContent = g.homing ? t('driving') : '';
+    $('homeCancel').style.display = g.homing ? '' : 'none';
+    $('homeYaw').disabled = $('homePitch').disabled = !!g.homing || !ready;
+    document.querySelectorAll('.pad button').forEach(b => b.disabled = !!g.homing);
+    if (!moving) setPad(g.manualYaw || 0, g.manualPitch || 0);
+    // settings
+    if (focused() !== 'url') $('url').value = cfg.rtmpUrl || '';
+    $('streamAuto').checked = cfg.streamAutoStart; $('recAuto').checked = cfg.recordAutoStart;
+    const qsel = $('quality'), qlist = (s.preview && s.preview.supportedQualities) || s.supportedQualities || [];
+    if (qlist.length && qsel.options.length !== qlist.length) {
+      qsel.innerHTML = qlist.map(q => `<option value="${q.id}">${q.label}</option>`).join('');
+    }
+    $('quality').value = cfg.quality; $('audio').checked = cfg.audioEnabled; $('screenMode').value = cfg.screenMode || 'ON';
+    const pv = s.preview || {};
+    $('fpsnote').textContent = (pv.cameraMaxFps && pv.requestedFps > pv.cameraMaxFps)
+      ? `${t('cameraMax')} ${pv.cameraMaxFps} ${t('fpsStreaming')} ${pv.capture}`
+      : (pv.capture ? `${t('cameraCapture')} ${pv.capture}` : '');
+    fillModeSelects(cfg.tracking, s.modes || []); $('trackAuto').checked = !!cfg.trackingAutoStart;
+    // per-function locks (server decides; the UI mirrors it) — padlock icon, title explains
+    const LK = s.locks || {};
+    const lockText = (on) => on ? String.fromCodePoint(0x1F512) : '';
+    const lk = (id, on, by) => { $(id).textContent = lockText(on); $(id).title = on ? t('lockedWhile') + ' ' + by : ''; };
+    lk('lkTracking', LK.tracking, t('trackingRuns'));
+    lk('lkStreaming', LK.streaming, t('streaming'));
+    lk('lkRecording', LK.recording, t('recording'));
+    lk('lkVideo', LK.video, LK.streaming && LK.recording ? t('streaming') + ' / ' + t('recording') : LK.streaming ? t('streaming') : t('recording'));
+    ['tSport', 'tVariant', 'tAge', 'yawRange', 'accel', 'trackAuto'].forEach(id => $(id).disabled = !!LK.tracking);
+    ['url', 'streamAuto'].forEach(id => $(id).disabled = !!LK.streaming);
+    $('recAuto').disabled = !!LK.recording;
+    ['quality', 'audio'].forEach(id => $(id).disabled = !!LK.video);
+    if (focused() !== 'yawRange') { $('yawRange').value = cfg.tracking.yawRange; $('yawRangeV').textContent = cfg.tracking.yawRange; }
+    if (focused() !== 'accel') { $('accel').value = cfg.tracking.acceleration; $('accelV').textContent = cfg.tracking.acceleration; }
+  } catch (e) { /* keep last known */ }
+}
+
+async function refreshLog() {
+  try {
+    const l = await api('/api/ble/log?limit=300');
+    $('crcinfo').textContent = `(current ${l.crcInit}${l.crcConfirmed ? ', confirmed by RX' : ', unconfirmed'})`;
+    const showChunks = $('showchunks').checked;
+    const lines = l.entries.filter(e => showChunks || e.dir !== 'RXc').map(e => {
+      const t = new Date(e.t).toLocaleTimeString();
+      const cls = e.dir === 'TX' ? 'tx' : e.dir === 'RX' ? (e.info.includes('BAD') ? 'bad' : 'rx') : e.dir === 'RXc' ? 'rxc' : 'ev';
+      return `<span class="${cls}">${t} ${e.dir.padEnd(3)} ${e.hex}${e.hex ? '  ' : ''}${e.info}</span>`;
+    });
+    const pre = $('log'); const atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 8;
+    pre.innerHTML = lines.join('\n'); if (atBottom) pre.scrollTop = pre.scrollHeight;
+  } catch (e) {}
+}
+
+// ---- manual gimbal control: hold-to-move (pointer + keyboard), repeated while held, stop on release ----
+// The browser sends requests over parallel connections, so a stop could be processed BEFORE the move
+// issued just before it. Every move/stop therefore carries a client id + sequence number and the server
+// drops anything older than the newest it has seen from this client. Keep-alives are skipped while one
+// is still in flight, so they never pile up behind a slow response.
+let moving = null, moveTimer = null, moveSeq = 0, moveInFlight = false;
+// Pad centre = the motion the gimbal is being told right now (dot when idle). While this page holds a
+// button it shows the local command; otherwise it mirrors the phone's status (phone pad, other browser).
+function padSymbol(y, p) {
+  if (!y && !p) return String.fromCodePoint(0x25CF);
+  if (y > 0 && p > 0) return String.fromCodePoint(0x2197); if (y < 0 && p > 0) return String.fromCodePoint(0x2196);
+  if (y > 0 && p < 0) return String.fromCodePoint(0x2198); if (y < 0 && p < 0) return String.fromCodePoint(0x2199);
+  if (y > 0) return String.fromCodePoint(0x25B6); if (y < 0) return String.fromCodePoint(0x25C0);
+  return p > 0 ? String.fromCodePoint(0x25B2) : String.fromCodePoint(0x25BC);
+}
+function setPad(y, p) { const c = $('padc'); c.textContent = padSymbol(y, p); c.classList.toggle('on', !!(y || p)); }
+const cid = Math.random().toString(36).slice(2, 8);
+function ctl(path) { return post(`${path}${path.includes('?') ? '&' : '?'}cid=${cid}&seq=${++moveSeq}`); }
+function sendMove(y, p) { const spd = +$('spd').value; return ctl(`/api/gimbal/move?yaw=${y * spd}&pitch=${p * spd}`); }
+function startMove(y, p) {
+  if (moving) return; moving = [y, p];
+  setPad(y, p);
+  sendMove(y, p);
+  moveTimer = setInterval(() => {
+    if (moveInFlight) return;
+    moveInFlight = true; sendMove(y, p).finally(() => { moveInFlight = false; });
+  }, 300);
+}
+function stopMove() {
+  if (!moving) return; moving = null; clearInterval(moveTimer); moveTimer = null;
+  setPad(0, 0); ctl('/api/gimbal/stop');
+}
+document.querySelectorAll('.pad button[data-yaw]').forEach(b => {
+  const y = +b.dataset.yaw, p = +b.dataset.pitch;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); startMove(y, p); });
+  b.addEventListener('contextmenu', e => e.preventDefault());            // iOS long-press callout
+  b.addEventListener('touchstart', e => e.preventDefault(), { passive: false });   // iOS text selection / magnifier
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, stopMove));
+});
+const KEYS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+document.addEventListener('keydown', e => { if (KEYS[e.key] && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); startMove(...KEYS[e.key]); } });
+document.addEventListener('keyup', e => { if (KEYS[e.key]) stopMove(); });
+window.addEventListener('blur', stopMove);
+
+function sendOp() { post(`/api/ble/op?op=${encodeURIComponent($('op').value.trim())}&payload=${encodeURIComponent($('payload').value.trim())}`).then(refreshLog); }
+function sendRaw() { post('/api/ble/send?hex=' + encodeURIComponent($('raw').value)).then(refreshLog); }
+function crcInit(v) { post('/api/ble/crcinit?value=' + v).then(refreshLog); }
+
+// ---- WebRTC live preview: starts automatically when the page opens; manual stop/start ----
+let pc = null, pcId = null, previewWanted = true;
+function manualStartPreview() { pvNoPath = false; startPreview(); }
+async function startPreview() {
+  if (pc) return; previewWanted = true;
+  pc = new RTCPeerConnection({ iceServers: [] });
+  pc.addTransceiver('video', { direction: 'recvonly' });
+  pc.ontrack = e => { $('pv').srcObject = e.streams[0] || new MediaStream([e.track]); };
+  pc.onconnectionstatechange = () => {
+    if (!pc) return;
+    $('pvinfo').textContent = t('pv_' + pc.connectionState);
+    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+      teardownPreview(); $('pvinfo').textContent = t('pv_nopath'); pvNoPath = true;
+      $('pvmsg').innerHTML = '<span style="color:var(--err)">' + t('pv_nopath_title') + '</span> ' + t('pv_nopath_text');
+    }
+  };
+  $('pvinfo').textContent = t('pv_connecting'); $('pvmsg').textContent = '';
+  const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+  await new Promise(res => { if (pc.iceGatheringState === 'complete') res();
+    else pc.addEventListener('icegatheringstatechange', () => pc.iceGatheringState === 'complete' && res()); setTimeout(res, 1500); });
+  try {
+    const r = await fetch('/api/webrtc/offer', { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: pc.localDescription.sdp });
+    if (!r.ok) throw new Error(await r.text());
+    const a = await r.json(); pcId = a.id;
+    await pc.setRemoteDescription({ type: 'answer', sdp: a.sdp });
+    $('pvstart').style.display = 'none'; $('pvstop').style.display = '';
+  } catch (e) { teardownPreview(); $('pvmsg').innerHTML = '<span style="color:var(--err)">' + t('pv_failed') + '</span> ' + e.message; }
+}
+function teardownPreview() {
+  if (pcId) { post('/api/webrtc/stop?id=' + pcId); pcId = null; }
+  if (pc) { pc.close(); pc = null; }
+  $('pv').srcObject = null; $('pvstart').style.display = ''; $('pvstop').style.display = 'none'; $('pvinfo').textContent = '';
+}
+function stopPreview() { previewWanted = false; teardownPreview(); }
+// Auto-start / auto-recover the preview: keep retrying while the app is reachable (e.g. after an app
+// restart), but stop after an ICE "no media path" failure — that is a network property, not transient.
+let pvNoPath = false;
+function autoPreview() { if (!pc && previewWanted && !pvNoPath) startPreview(); }
+
+// developer card: debug builds only, opened with ?dev
+const DEV = /[?&]dev\b/.test(location.search);
+let devStarted = false;
+function maybeStartDev(s) {
+  if (!DEV || devStarted || !s || !s.debug) return;
+  devStarted = true; $('devcard').style.display = ''; refreshLog(); setInterval(refreshLog, 1500);
+}
+refresh(); autoPreview();
+setInterval(refresh, 1000); setInterval(autoPreview, 8000);
+</script>
+</body>
+</html>
