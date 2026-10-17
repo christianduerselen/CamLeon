@@ -114,7 +114,7 @@ class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : Na
                 uri == "/api/video/orient" && post -> json(JSONObject().put("applied", CaptureSession.media.setOrientation(
                     param("camera")?.toIntOrNull(), param("rotation")?.toIntOrNull(), param("portrait")?.toBooleanStrictOrNull(), param("forced"))))
                 uri == "/api/snapshot.jpg" -> {
-                    val jpg = CaptureSession.media.snapshotJpeg() ?: return newFixedLengthResponse(Response.Status.SERVICE_UNAVAILABLE, MIME_PLAINTEXT, "camera not running")
+                    val jpg = CaptureSession.camera.snapshotJpeg() ?: CaptureSession.media.snapshotJpeg() ?: return newFixedLengthResponse(Response.Status.SERVICE_UNAVAILABLE, MIME_PLAINTEXT, "camera not running")
                     newFixedLengthResponse(Response.Status.OK, "image/jpeg", java.io.ByteArrayInputStream(jpg), jpg.size.toLong()).also { it.addHeader("Cache-Control", "no-store") }
                 }
 

@@ -92,6 +92,7 @@ GET  /api/status
 POST /api/settings?quality=P1080&audio=true&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=85&acceleration=1000
 POST /api/gimbal/move?yaw=-100..100&pitch=-100..100      POST /api/gimbal/stop
 POST /api/gimbal/home?axis=yaw|pitch                     POST /api/gimbal/home/cancel
+GET  /api/snapshot.jpg                                    (current camera frame at capture resolution)
 GET  /api/recordings                                     GET  /api/recordings/file?name=…[&download=1]
 POST /api/recordings/delete?name=…
 ```

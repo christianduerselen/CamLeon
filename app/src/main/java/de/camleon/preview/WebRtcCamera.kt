@@ -169,6 +169,54 @@ class WebRtcCamera(private val context: Context) {
         outRenderer = null
     }
 
+    // ---- snapshot ---------------------------------------------------------------------------
+
+    /**
+     * JPEG of the next camera frame, straight from the capture track. Works whenever the camera runs —
+     * also with the phone locked and neither stream nor recording on, when the encoder pipeline (and
+     * with it RootEncoder's own photo grab) is idle. Null if no frame arrives within 2 s.
+     */
+    fun snapshotJpeg(quality: Int = 80): ByteArray? {
+        val t = track ?: return null
+        val done = CountDownLatch(1)
+        var out: ByteArray? = null
+        val sink = object : org.webrtc.VideoSink {
+            @Volatile var taken = false
+            override fun onFrame(frame: org.webrtc.VideoFrame) {
+                if (taken) return
+                taken = true
+                out = runCatching { frameToJpeg(frame, quality) }.onFailure { Log.w(TAG, "snapshot: ${it.message}") }.getOrNull()
+                done.countDown()
+            }
+        }
+        t.addSink(sink)
+        try { done.await(2, TimeUnit.SECONDS) } finally { t.removeSink(sink) }
+        return out
+    }
+
+    private fun frameToJpeg(frame: org.webrtc.VideoFrame, quality: Int): ByteArray {
+        val i420 = frame.buffer.toI420() ?: error("no I420 buffer")
+        try {
+            val w = i420.width; val h = i420.height
+            // I420 → NV21 (Y plane, then interleaved V/U) for YuvImage's JPEG encoder.
+            val nv21 = ByteArray(w * h * 3 / 2)
+            val y = i420.dataY; val u = i420.dataU; val v = i420.dataV
+            for (row in 0 until h) { y.position(row * i420.strideY); y.get(nv21, row * w, w) }
+            var o = w * h
+            for (row in 0 until h / 2) for (col in 0 until w / 2) {
+                nv21[o++] = v.get(row * i420.strideV + col); nv21[o++] = u.get(row * i420.strideU + col)
+            }
+            val bos = java.io.ByteArrayOutputStream()
+            android.graphics.YuvImage(nv21, android.graphics.ImageFormat.NV21, w, h, null).compressToJpeg(android.graphics.Rect(0, 0, w, h), quality, bos)
+            if (frame.rotation % 360 == 0) return bos.toByteArray()
+            // Frames tagged with a rotation (sensor orientation) are turned upright here.
+            val bmp = android.graphics.BitmapFactory.decodeByteArray(bos.toByteArray(), 0, bos.size())
+            val m = android.graphics.Matrix().apply { postRotate(frame.rotation.toFloat()) }
+            val rot = android.graphics.Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, m, true)
+            return java.io.ByteArrayOutputStream().also { rot.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, it) }.toByteArray()
+        } finally { i420.release() }
+    }
+
     // ---- browser viewers --------------------------------------------------------------------
 
     data class Answer(val id: String, val sdp: String)
