@@ -50,6 +50,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         applyScreenMode(CaptureSettings.ScreenMode.ON)
         CaptureSession.init(this)
+        AppQuit.attach(this)
 
         setContent {
             MaterialTheme {

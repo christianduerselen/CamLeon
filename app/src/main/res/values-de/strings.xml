@@ -50,6 +50,13 @@
     <string name="not_connected">(nicht verbunden)</string>
     <string name="driving_to_zero">fährt auf 0°…</string>
     <string name="cancel">Abbrechen</string>
+    <string name="quit">Beenden</string>
+    <string name="quit_title">CamLeon beenden?</string>
+    <string name="quit_busy">Noch aktiv: %1$s. Beenden stoppt alles; eine laufende Aufnahme wird vorher gespeichert.</string>
+    <string name="quit_idle">Kamera, Gimbal-Verbindung und Browser-Steuerung werden beendet.</string>
+    <string name="quit_what_stream">Stream</string>
+    <string name="quit_what_record">Aufnahme</string>
+    <string name="quit_what_track">Tracking</string>
     <string name="speed">Geschwindigkeit %1$d</string>
     <string name="pad_hint">0° = Richtung beim letzten Tracking-Start. Taste gedrückt halten zum Schwenken/Neigen, auch als Override während des Trackings.</string>
 

@@ -29,7 +29,7 @@ object ChameleonFrame {
         0x41 to "move (axis,dir,speed)", 0x42 to "status yaw/pitch", 0x43 to "status 'C'", 0x46 to "ack [mode,capture,track]",
         0x47 to "handshake 0x47 (pre-angle)", 0x51 to "ota transfer", 0x52 to "periodic value 'R'", 0x55 to "ota install",
         0x57 to "firmware info", 0x58 to "handshake 0x58", 0x5B to "field marks", 0x5D to "voltage/power",
-        0x62 to "handshake 0x62", 0x63 to "udid", 0x66 to "status 'f'", 0x67 to "battery %", 0x6A to "limit switch",
+        0x62 to "handshake 0x62", 0x63 to "udid", 0x66 to "external power (01 = USB)", 0x67 to "battery %", 0x6A to "limit switch",
         0x6B to "handshake 0x6B", 0x6D to "capability entry", 0x6F to "tracking SDK start/stop", 0x70 to "choose mode",
         0x71 to "angle 'q'", 0x72 to "tracking params (p1,p2,yawLim,p4)", 0x73 to "status 's'", 0x76 to "handshake 0x76",
         0x77 to "api version", 0x78 to "gimbal log text", 0x79 to "error code", 0x7A to "angle reporting on/off",

@@ -67,9 +67,10 @@ Other ids are rejected (the gimbal keeps the previous mode).
 |---|---|---|
 | `0x42` | `yaw i16, pitch i16` (× 0.01°) | Angles, sent while reporting is on and tracking is off. |
 | `0x46` | `mode, capture, track` | Acknowledgement for `0x70` / `0x72` / `0x6F`. |
-| `0x67` | `percent` | Battery level. |
+| `0x67` | `percent` | Battery level, sent every 10 s together with `0x66`. The value jumps up when external power is connected (90 → 99 within 10 s) and does not drop back right after unplugging, so treat it as an estimate. |
+| `0x66` | `powered u8` | External power: `01` = USB power connected, `00` = on battery. Sent every 10 s right after `0x67`; changes within about 10 s of plugging in or out. |
 | `0x78` | ASCII text | Log lines of the tracking engine. While tracking runs there is no `0x42`; the per-frame lines (`FrameN … YawX PitY`) carry the angles instead. |
-| `0x52`, `0x66`, `0x6D` | | Periodic status / capability table (not used). |
+| `0x52`, `0x6D` | | Periodic status / capability table (not used). |
 
 ## Behaviour worth knowing
 

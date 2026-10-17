@@ -61,6 +61,7 @@ object CaptureSession {
     private val _gimbalPitch = MutableStateFlow<Double?>(null)
     val gimbalPitch: StateFlow<Double?> = _gimbalPitch.asStateFlow()
     @Volatile var gimbalBattery: Int? = null; private set
+    @Volatile var gimbalPowered: Boolean? = null; private set
     @Volatile var gimbalNote: String? = null; private set
     @Volatile var manualYaw = 0; private set
     @Volatile var manualPitch = 0; private set
@@ -189,6 +190,26 @@ object CaptureSession {
     fun updateSettings(params: Map<String, String?>) = updateSettings(_settings.value.applyParams(params))
 
     // ---- the three switches --------------------------------------------------------------------
+
+    /**
+     * Orderly teardown before the process ends ([AppQuit]): stop tracking (the gimbal drives back to its
+     * zero), finish the recording (MP4 index written), stop the stream, drop the gimbal link.
+     * [done] runs on a background thread once everything is stopped.
+     */
+    fun shutdown(done: () -> Unit) {
+        scope.launch {
+            runCatching {
+                homeJob?.cancel(); moveJob?.cancel(); trackingJob?.cancel()
+                if (gimbalReady() && (_tracking.value || gimbalTrackingActive)) { setTracking(false); delay(400) }
+                else if (gimbalReady() && (manualYaw != 0 || manualPitch != 0)) { stopMove(); delay(300) }
+                media.stopRecording()
+                media.stopStreaming()
+                delay(1000)   // let the media scanner pick up the finished file and the stop frames go out
+                ble.disconnect()
+            }.onFailure { Log.w(TAG, "shutdown: ${it.message}") }
+            done()
+        }
+    }
 
     fun setStreaming(on: Boolean): Boolean = if (on) media.startStreaming(_settings.value) else { media.stopStreaming(); true }
     fun setRecording(on: Boolean): Boolean = if (on) media.startRecording(_settings.value) else { media.stopRecording(); true }
@@ -418,7 +439,7 @@ object CaptureSession {
     }
     fun cancelHome() { homeJob?.cancel(); homing = false; stopMove() }
 
-    /** RX: 0x42 yaw/pitch (int16 LE, 1/100°), 0x46 ack [mode, capture, track], 0x67 battery. */
+    /** RX: 0x42 yaw/pitch (int16 LE, 1/100°), 0x46 ack [mode, capture, track], 0x67 battery, 0x66 external power. */
     private fun onGimbalFrame(f: ChameleonFrame.Parsed) {
         if (!f.crcOk) return
         val p = f.payload
@@ -433,6 +454,8 @@ object CaptureSession {
                 if (gimbalTrackingActive && !priming) { _tracking.value = true; trackingNote = null }
             }
             0x67 -> if (p.isNotEmpty()) gimbalBattery = p[0].toInt() and 0xFF
+            // Sent every 10 s right after 0x67: 01 = USB power connected, 00 = on battery (verified).
+            0x66 -> if (p.isNotEmpty()) gimbalPowered = p[0].toInt() == 1
             // While the tracking SDK runs the gimbal stops sending 0x42 (verified) but
             // prints "FrameN fps16 SZ0 Yaw-2.0 Pit11.4" per video frame → use that as telemetry.
             0x78 -> {
@@ -505,10 +528,13 @@ object CaptureSession {
             put("gimbal", JSONObject().apply {
                 put("connected", gimbalReady())
                 put("yaw", _gimbalYaw.value ?: JSONObject.NULL); put("pitch", _gimbalPitch.value ?: JSONObject.NULL)
-                put("battery", gimbalBattery ?: JSONObject.NULL)
+                put("battery", gimbalBattery ?: JSONObject.NULL); put("powered", gimbalPowered ?: JSONObject.NULL)
                 put("manualYaw", manualYaw); put("manualPitch", manualPitch); put("homing", homing); put("angleSource", angleSource)
                 gimbalNote?.let { put("note", it) }
             })
+            // Phone health (battery/power, thermal status, free storage) for remote monitoring.
+            put("phone", de.camleon.common.PhoneStatus.toJson(appContext,
+                s.quality.bitrateBps.toLong() + if (s.audioEnabled) AUDIO_BITRATE_BPS else 0L))
             put("version", BuildConfig.VERSION_NAME); put("debug", BuildConfig.DEBUG)
             put("locks", locks().toJson())
             put("modes", de.camleon.stream.ChameleonModes.toJson())
@@ -527,4 +553,6 @@ object CaptureSession {
     }
 
     private const val TAG = "CaptureSession"
+    /** Audio bitrate of stream and recording (MediaPipeline.prepareAudio), for the remaining recording time. */
+    private const val AUDIO_BITRATE_BPS = 128_000L
 }

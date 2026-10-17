@@ -16,6 +16,7 @@ import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
+import org.webrtc.RtpParameters
 import org.webrtc.RtpReceiver
 import org.webrtc.RtpTransceiver
 import org.webrtc.SdpObserver
@@ -204,16 +205,6 @@ class WebRtcCamera(private val context: Context) {
             ?: run { closePeer(id); error("offer has no video m-line") }
         videoTransceiver.direction = RtpTransceiver.RtpTransceiverDirection.SEND_ONLY
         videoTransceiver.sender.setTrack(track!!, false)
-        // Browser preview is best-effort: cap it at 720p / 30 fps / 4 Mbps per viewer regardless of the
-        // capture format, so a 1080p60 stream quality does not double the phone's encoding load.
-        runCatching {
-            val params = videoTransceiver.sender.parameters
-            params.encodings.forEach { e ->
-                e.maxFramerate = 30; e.maxBitrateBps = 4_000_000
-                e.scaleResolutionDownBy = if (height > 720) height / 720.0 else 1.0
-            }
-            videoTransceiver.sender.parameters = params
-        }.onFailure { Log.w(TAG, "sender parameters failed: ${it.message}") }
         // Prefer H.264 (hardware MediaCodec with direct texture input — no CPU YUV readback, and the
         // phone is already encoding H.264 for RTMP). Falls back to the browser's order (VP8) otherwise.
         runCatching {
@@ -226,11 +217,30 @@ class WebRtcCamera(private val context: Context) {
             .getOrElse { closePeer(id); error("createAnswer: ${it.message}") }
         pc.setLocalDescription(answer)
             .getOrElse { closePeer(id); error("setLocalDescription: ${it.message}") }
+        applyPreviewLimits(id, videoTransceiver.sender)
         gathered.await(2, TimeUnit.SECONDS)
         val sdp = pc.localDescription?.description ?: answer.description
         Log.i(TAG, "[$id] answer ready (${peers.size} viewer(s))")
         return Answer(id, sdp)
     }
+
+    /**
+     * Browser preview is for watching and re-aiming, not for detail: cap it at 540p / 30 fps / 1.5 Mbps
+     * per viewer regardless of the capture format (each viewer has its own encoder; less heat).
+     * On a weak link keep the frame rate and drop resolution, so manual control stays fluid.
+     * Must run after setLocalDescription: before negotiation the sender of a transceiver created by the
+     * browser's offer has no encodings yet, and the limits would silently not apply.
+     */
+    private fun applyPreviewLimits(id: String, sender: org.webrtc.RtpSender) = runCatching {
+        val params = sender.parameters
+        params.encodings.forEach { e ->
+            e.maxFramerate = 30; e.maxBitrateBps = PREVIEW_MAX_BITRATE_BPS
+            e.scaleResolutionDownBy = if (height > PREVIEW_MAX_HEIGHT) height / PREVIEW_MAX_HEIGHT.toDouble() else 1.0
+        }
+        params.degradationPreference = RtpParameters.DegradationPreference.MAINTAIN_FRAMERATE
+        val ok = sender.setParameters(params)
+        Log.i(TAG, "[$id] preview limits: encodings=${params.encodings.size} scale=${params.encodings.firstOrNull()?.scaleResolutionDownBy} ok=$ok")
+    }.onFailure { Log.w(TAG, "[$id] sender parameters failed: ${it.message}") }
 
     fun closePeer(id: String) { peers.remove(id)?.let { runCatching { it.close() } } }
     fun viewerCount() = peers.size
@@ -308,7 +318,11 @@ class WebRtcCamera(private val context: Context) {
         override fun onAddTrack(r: RtpReceiver, s: Array<out MediaStream>) {}
     }
 
-    private companion object { const val TAG = "WebRtcCamera" }
+    private companion object {
+        const val TAG = "WebRtcCamera"
+        const val PREVIEW_MAX_HEIGHT = 540
+        const val PREVIEW_MAX_BITRATE_BPS = 1_500_000
+    }
 }
 
 /**

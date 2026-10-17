@@ -19,7 +19,8 @@ import de.camleon.common.NetUtil
  * not visible (screen locked, other app in front). Without it Android's camera service revokes the
  * camera about 5 s after the screen locks ("Access … has been restricted … isUidVisible false") and
  * the preview/stream go black. The service does no work itself — [CaptureSession] holds everything —
- * it only carries the foreground state and a notification with the browser control URL.
+ * it only carries the foreground state and a notification with the browser control URL and a Quit
+ * action ([AppQuit]).
  */
 class CaptureService : Service() {
 
@@ -35,6 +36,7 @@ class CaptureService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_QUIT) { AppQuit.quit(this); return START_NOT_STICKY }
         val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or
             ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
         try {
@@ -52,12 +54,17 @@ class CaptureService : Service() {
             this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        val quit = PendingIntent.getService(
+            this, 1, Intent(this, CaptureService::class.java).setAction(ACTION_QUIT),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val urls = NetUtil.controlUrls(ControlServer.DEFAULT_PORT)
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.presence_video_online)
             .setContentTitle(getString(R.string.notif_title))
             .setContentText(if (urls.isEmpty()) getString(R.string.notif_text_plain) else getString(R.string.notif_text_url, urls.first()))
             .setContentIntent(open)
+            .addAction(Notification.Action.Builder(null, getString(R.string.quit), quit).build())
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
@@ -69,6 +76,7 @@ class CaptureService : Service() {
         private const val TAG = "CaptureService"
         private const val CHANNEL = "capture"
         private const val NOTIFICATION_ID = 1
+        private const val ACTION_QUIT = "de.camleon.action.QUIT"
 
         /** Start (or re-assert) the foreground service; call while the app is in the foreground. */
         fun start(context: Context) {

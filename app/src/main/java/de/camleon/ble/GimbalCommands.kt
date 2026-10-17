@@ -15,8 +15,8 @@ package de.camleon.ble
  *  handshake after connect: 0x76 01, 0x58 01, 0x62 01, 0x6B 08   (then 0x47 01 when the camera screen opens)
  *  simple requests (no payload): 0x77 api version, 0x57 firmware, 0x63 udid, 0x67 battery
  * RX (gimbal -> phone):
- *  0x42 status [yaw i16 ×0.01°][pitch i16 ×0.01°]   0x46 ack [modeId][capture][track]   0x67 battery [%]
- *  0x78 log text (ASCII)   0x52 periodic value   0x6D capability table [id,01,val] ×16   0x66 [01] unknown
+ *  0x42 status [yaw i16 ×0.01°][pitch i16 ×0.01°]   0x46 ack [modeId][capture][track]   0x67 battery [%]   0x66 external power [01 = USB, 00 = battery]
+ *  0x78 log text (ASCII)   0x52 periodic value   0x6D capability table [id,01,val] ×16
  */
 object GimbalCommands {
     const val AXIS_YAW = 0

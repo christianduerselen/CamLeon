@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -53,6 +55,7 @@ import androidx.compose.ui.window.Dialog
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import de.camleon.AppQuit
 import de.camleon.CaptureSession
 import de.camleon.R
 import de.camleon.ble.ChameleonBleClient
@@ -131,7 +134,13 @@ fun CaptureScreen() {
                 title = stringResource(R.string.recording), checked = recording, onToggle = { CaptureSession.setRecording(it) },
                 status = if (recording) stringResource(R.string.st_recording_to, recordFile?.substringAfterLast('/') ?: "") else stringResource(R.string.st_saves_to),
             )
-            TextButton(onClick = { showSettings = !showSettings }) { Text(stringResource(if (showSettings) R.string.settings_hide else R.string.settings_show)) }
+            var askQuit by remember { mutableStateOf(false) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { showSettings = !showSettings }) { Text(stringResource(if (showSettings) R.string.settings_hide else R.string.settings_show)) }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { askQuit = true }) { Text(stringResource(R.string.quit), color = MaterialTheme.colorScheme.error) }
+            }
+            if (askQuit) QuitDialog(onDismiss = { askQuit = false })
             if (showSettings) SettingsPanel(settings, CaptureSession.locks()) { CaptureSession.updateSettings(it) }
         }
     }
@@ -474,4 +483,23 @@ private fun qrBitmap(text: String, size: Int): Bitmap {
     val matrix = QRCodeWriter().encode(text, BarcodeFormat.QR_CODE, size, size, mapOf(EncodeHintType.MARGIN to 1))
     val px = IntArray(size * size) { i -> if (matrix.get(i % size, i / size)) 0xFF000000.toInt() else 0xFFFFFFFF.toInt() }
     return Bitmap.createBitmap(px, size, size, Bitmap.Config.ARGB_8888)
+}
+
+/** Confirmation before [AppQuit]; names what is still running (stream / recording / tracking). */
+@Composable
+private fun QuitDialog(onDismiss: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val media = CaptureSession.media
+    val active = buildList {
+        if (media.isStreaming()) add(stringResource(R.string.quit_what_stream))
+        if (media.isRecording()) add(stringResource(R.string.quit_what_record))
+        if (CaptureSession.tracking.value) add(stringResource(R.string.quit_what_track))
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.quit_title)) },
+        text = { Text(if (active.isEmpty()) stringResource(R.string.quit_idle) else stringResource(R.string.quit_busy, active.joinToString(", "))) },
+        confirmButton = { TextButton(onClick = { onDismiss(); AppQuit.quit(context) }) { Text(stringResource(R.string.quit), color = MaterialTheme.colorScheme.error) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }

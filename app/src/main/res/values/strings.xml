@@ -56,6 +56,13 @@
     <string name="not_connected">(not connected)</string>
     <string name="driving_to_zero">driving to 0°…</string>
     <string name="cancel">Cancel</string>
+    <string name="quit">Quit</string>
+    <string name="quit_title">Quit CamLeon?</string>
+    <string name="quit_busy">Still active: %1$s. Quitting stops everything; a running recording is saved first.</string>
+    <string name="quit_idle">Camera, gimbal link and browser control will stop.</string>
+    <string name="quit_what_stream">Stream</string>
+    <string name="quit_what_record">Recording</string>
+    <string name="quit_what_track">Tracking</string>
     <string name="speed">speed %1$d</string>
     <string name="pad_hint">0° = direction at the last tracking start. Hold a button to pan/tilt, also as override while tracking.</string>
 
