@@ -129,7 +129,7 @@ class WebRtcCamera(private val context: Context) {
             val cap: CameraVideoCapturer = enumerator.createCapturer(name, cameraEvents) ?: error("capturer unavailable")
             val h = SurfaceTextureHelper.create("CamCapture", eglBase.eglBaseContext)
             val src = factory.createVideoSource(cap.isScreencast)
-            cap.initialize(h, context, src.capturerObserver)
+            cap.initialize(h, context, LandscapeLock(src.capturerObserver))
             cap.startCapture(width, height, fps)
             track = factory.createVideoTrack("cam0", src).also { it.setEnabled(true) }
             helper = h; capturer = cap; source = src
@@ -309,4 +309,23 @@ class WebRtcCamera(private val context: Context) {
     }
 
     private companion object { const val TAG = "WebRtcCamera" }
+}
+
+/**
+ * The phone is mounted in landscape. libwebrtc tags every camera frame with a rotation derived from the
+ * current DISPLAY rotation; while the screen is locked the display reports portrait, frames get tagged
+ * 90°/270° and the browser preview turns 9:16. This observer keeps frames in landscape: portrait tags
+ * are replaced by the last landscape rotation seen (0° by default = landscape with the camera on the
+ * left, the usual mount).
+ */
+private class LandscapeLock(private val downstream: org.webrtc.CapturerObserver) : org.webrtc.CapturerObserver {
+    @Volatile private var lastLandscape = 0
+    override fun onCapturerStarted(success: Boolean) = downstream.onCapturerStarted(success)
+    override fun onCapturerStopped() = downstream.onCapturerStopped()
+    override fun onFrameCaptured(frame: org.webrtc.VideoFrame) {
+        val r = frame.rotation
+        if (r == 0 || r == 180) { lastLandscape = r; downstream.onFrameCaptured(frame); return }
+        val fixed = org.webrtc.VideoFrame(frame.buffer, lastLandscape, frame.timestampNs)
+        downstream.onFrameCaptured(fixed)   // the buffer stays owned by the original frame (no extra retain/release)
+    }
 }
