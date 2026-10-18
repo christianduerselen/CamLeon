@@ -258,7 +258,15 @@ class WebRtcCamera(private val context: Context) {
             }
             override fun onIceConnectionChange(s: PeerConnection.IceConnectionState) {
                 Log.i(TAG, "[$id] ice $s")
-                if (s == PeerConnection.IceConnectionState.FAILED || s == PeerConnection.IceConnectionState.CLOSED) closePeer(id)
+                when (s) {
+                    PeerConnection.IceConnectionState.FAILED, PeerConnection.IceConnectionState.CLOSED -> closePeer(id)
+                    // A closed tab / lost Wi-Fi only ever shows up as DISCONNECTED (ICE keeps retrying, FAILED
+                    // never comes) and each viewer holds its own encoder → drop it after a grace period
+                    // unless the connection comes back (brief Wi-Fi hiccups do).
+                    PeerConnection.IceConnectionState.DISCONNECTED -> main.postDelayed(Runnable { closePeer(id); Log.i(TAG, "[$id] closed: disconnected > ${DISCONNECT_GRACE_MS / 1000}s") }.also { disconnectTimers[id] = it }, DISCONNECT_GRACE_MS)
+                    PeerConnection.IceConnectionState.CONNECTED, PeerConnection.IceConnectionState.COMPLETED -> disconnectTimers.remove(id)?.let { main.removeCallbacks(it) }
+                    else -> {}
+                }
             }
         }) ?: error("createPeerConnection failed")
         peers[id] = pc
@@ -309,7 +317,11 @@ class WebRtcCamera(private val context: Context) {
         Log.i(TAG, "[$id] preview limits: encodings=${params.encodings.size} scale=${params.encodings.firstOrNull()?.scaleResolutionDownBy} ok=$ok")
     }.onFailure { Log.w(TAG, "[$id] sender parameters failed: ${it.message}") }
 
-    fun closePeer(id: String) { peers.remove(id)?.let { runCatching { it.close() } } }
+    private val disconnectTimers = ConcurrentHashMap<String, Runnable>()
+    fun closePeer(id: String) {
+        disconnectTimers.remove(id)?.let { main.removeCallbacks(it) }
+        peers.remove(id)?.let { runCatching { it.close() } }
+    }
     fun viewerCount() = peers.size
 
     /** Debug: key send-side stats for every viewer (codec, frames encoded/sent, bytes, ICE pair). */
@@ -389,6 +401,7 @@ class WebRtcCamera(private val context: Context) {
         const val TAG = "WebRtcCamera"
         const val PREVIEW_MAX_HEIGHT = 540
         const val PREVIEW_MAX_BITRATE_BPS = 1_500_000
+        const val DISCONNECT_GRACE_MS = 10_000L
     }
 }
 

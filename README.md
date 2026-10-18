@@ -11,7 +11,8 @@ streaming and local recording, plus a browser control page with live preview in 
 - Tracking runs on the gimbal itself; the app talks to it over BLE (protocol: [docs/ble-protocol.md](docs/ble-protocol.md)).
 - Streaming/recording: RootEncoder (H.264/AAC), one encoder shared by stream and recording.
   Preview to the browser: WebRTC, capped at 540p / 30 fps / 1.5 Mbps per viewer (each open browser
-  tab adds its own encoder on the phone).
+  tab adds its own encoder on the phone; a tab that is closed or navigates away frees it at once, a
+  crashed tab or lost Wi-Fi after about 15 s).
 - Qualities: 720p30, 1080p30 and 1080p60. 1080p60 is only offered when the camera supports 60 fps
   at 1080p for apps (e.g. moto g51 5G: yes; Galaxy S22 Ultra: no). At 60 fps the exposure time is
   at most 1/60 s, so in dim light the picture gets darker or noisier than at 30 fps.
@@ -113,6 +114,17 @@ lists the files in `Movies/CamLeon` and lets you play them in the browser, downl
 - Without extra permission Android shows CamLeon only the files it recorded in the current
   installation. With the "Videos" permission (asked at start) older files are listed and served too,
   but Android only lets you delete those on the phone (`deletable: false`, delete returns 403).
+
+### Remote view (since 1.3.0)
+
+`http://<phone-ip>:8080/remote` (button "Remote" in the live preview card): the live picture fills the
+screen and the controls float on top, half-transparent — for correcting the camera during a game from a
+phone or tablet. Top strip: back link, the three switches (Tracking / Stream / REC; stopping the stream
+or the recording asks for confirmation), gimbal and phone battery. Bottom: pad (hold to move,
+arrow keys on a PC) and speed. The page keeps the screen awake while it is visible.
+Android/desktop have a fullscreen button; iOS Safari has no page fullscreen — add the page to the home
+screen instead (Share → "Add to Home Screen"), it then runs without browser bars.
+The pad and preview logic is shared with the main page (`web/control.js`).
 
 ### Status: phone health (since 1.1.0)
 

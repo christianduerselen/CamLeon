@@ -1,0 +1,14 @@
+{
+  "name": "CamLeon",
+  "short_name": "CamLeon",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111418",
+  "theme_color": "#111418",
+  "icons": [
+    { "src": "/favicon-64.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

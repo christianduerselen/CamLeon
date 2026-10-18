@@ -28,6 +28,7 @@ import org.json.JSONObject
  *                 GET  /api/ble/log  | POST /api/ble/log/clear
  *   Preview: POST /api/webrtc/offer (body = SDP) -> {id,sdp} | POST /api/webrtc/stop?id= | GET /api/webrtc/stats
  *            GET  /api/snapshot.jpg
+ *   Remote view (page: GET /remote): full-screen preview + overlay gimbal control, uses the APIs above.
  *   Recordings (page: GET /recordings):
  *   GET  /api/recordings                       list {recordings:[{name,size,modified,durationMs,recording,playable,deletable}],totalBytes}
  *   GET  /api/recordings/file?name=&download=1 the MP4 (Range requests supported; download=1 → attachment)
@@ -45,6 +46,17 @@ class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : Na
             when {
                 uri == "/" || uri == "/index.html" -> servePage("web/index.html")
                 uri == "/recordings" || uri == "/recordings.html" -> servePage("web/recordings.html")
+                uri == "/remote" || uri == "/remote.html" -> servePage("web/remote.html")
+                uri == "/control.js" -> {
+                    val js = context.assets.open("web/control.js").readBytes()
+                    newFixedLengthResponse(Response.Status.OK, "application/javascript; charset=utf-8", java.io.ByteArrayInputStream(js), js.size.toLong())
+                        .also { it.addHeader("Cache-Control", "no-cache") }     // changes with every version
+                }
+                uri == "/manifest.webmanifest" -> {
+                    val m = context.assets.open("web/manifest.webmanifest").readBytes()
+                    newFixedLengthResponse(Response.Status.OK, "application/manifest+json", java.io.ByteArrayInputStream(m), m.size.toLong())
+                        .also { it.addHeader("Cache-Control", "max-age=86400") }
+                }
                 uri == "/favicon-64.png" || uri == "/apple-touch-icon.png" -> {
                     val png = context.assets.open("web" + uri).readBytes()
                     newFixedLengthResponse(Response.Status.OK, "image/png", java.io.ByteArrayInputStream(png), png.size.toLong())

@@ -8,6 +8,9 @@
 <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="CamLeon">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
   :root { color-scheme: dark; --bg:#111418; --card:#1b1f26; --fg:#e8eaed; --mut:#9aa0a6; --acc:#4f9cff; --err:#ff5c5c; --ok:#3ecf8e; --rec:#ff5c5c; }
   * { box-sizing: border-box; }
@@ -98,6 +101,7 @@
     <div class="row" style="justify-content:space-between">
       <div class="ctitle" style="margin:0" data-i18n="live">Live preview</div>
       <span class="row"><span id="pvinfo" class="mut"></span>
+        <a href="/remote" class="sm" data-i18n="remoteLink" style="padding:7px 12px;border-radius:8px;background:#2c323c;color:#fff;font-size:13px;font-weight:600;text-decoration:none">Remote</a>
         <button class="sm start" id="pvstart" data-i18n="startPreview" onclick="manualStartPreview()">Start preview</button>
         <button class="sm stop" id="pvstop" data-i18n="stop" onclick="stopPreview()" style="display:none">Stop</button></span>
     </div>
@@ -240,6 +244,7 @@
 
 <div id="ver" class="mut" style="text-align:center;margin:4px 0 24px;font-size:12px"></div>
 
+<script src="/control.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const fmt = v => (v == null ? '—' : Number(v).toFixed(1));
@@ -261,7 +266,7 @@ const I18N = {
     pv_new: 'starting…', pv_connecting: 'connecting…', pv_connected: 'live', pv_disconnected: 'interrupted', pv_failed: 'failed', pv_closed: 'closed',
     pv_nopath: 'no video path', pv_nopath_title: 'No video path.',
     pv_nopath_text: 'The browser cannot reach the phone directly. Browser and phone must be in the same network.',
-    pv_failed: 'Preview failed:',
+    pv_failed: 'Preview failed:', pv_blocked: 'The browser stopped playback — tap Start preview.',
   },
   de: {
     sport: 'Sportart', variant: 'Feld / Kamera', age: 'Altersgruppe',
@@ -274,7 +279,7 @@ const I18N = {
     pv_new: 'startet…', pv_connecting: 'verbinde…', pv_connected: 'live', pv_disconnected: 'unterbrochen', pv_closed: 'beendet',
     pv_nopath: 'kein Videoweg', pv_nopath_title: 'Kein Videoweg.',
     pv_nopath_text: 'Der Browser erreicht das Handy nicht direkt. Browser und Handy müssen im selben Netzwerk sein.',
-    pv_failed: 'Vorschau fehlgeschlagen:',
+    pv_failed: 'Vorschau fehlgeschlagen:', pv_blocked: 'Der Browser hat die Wiedergabe gestoppt — bitte Vorschau starten.',
     manual: 'Gimbal · manuell / Override', holdHint: 'Taste gedrückt halten (oder Pfeiltasten) · auch während des Trackings als Override', speed: 'Geschwindigkeit',
     tracking: 'Tracking', streaming: 'Streaming', recording: 'Aufnahme', settings: 'Einstellungen', mode: 'Modus',
     modeBasketball: 'Basketball', modeSoccer: 'Fußball', modeSingle: 'Einzelperson', modeGroup: 'Gruppe / frei',
@@ -282,7 +287,7 @@ const I18N = {
     angleHint: 'Der Winkel gilt ± um die Richtung, in die die Kamera beim Tracking-Start zeigt: auf die Mittellinie zielen, dann Tracking einschalten.',
     display: 'Handy-Display', scrOn: 'Display an lassen', scrDim: 'abdunkeln: schwarzer Bildschirm (Tippen am Handy weckt es)', scrTimeout: 'System-Timeout: Display schaltet sich selbst ab',
     displayHint: 'Kamera, Stream und Gimbal laufen auch mit dunklem oder ausgeschaltetem Display weiter.',
-    recordingsLink: 'Aufnahmen', statusCard: 'Status', phoneLbl: 'Handy',
+    recordingsLink: 'Aufnahmen', remoteLink: 'Remote', statusCard: 'Status', phoneLbl: 'Handy',
     battery: 'Akku', onPower: 'am Strom', onBattery: 'Akkubetrieb', temp: 'Temperatur', free: 'frei', recLeft: 'Aufnahme',
     th_none: 'normal', th_light: 'leicht erhöht', th_moderate: 'erhöht', th_severe: 'hoch — Handy drosselt', th_critical: 'kritisch', th_emergency: 'kritisch', th_shutdown: 'kritisch — schaltet ab', th_unknown: '—',
     streamAuto: 'Streaming beim App-Start automatisch starten', recAuto: 'Aufnahme beim App-Start automatisch starten',
@@ -419,7 +424,7 @@ async function refresh() {
     $('homeCancel').style.display = g.homing ? '' : 'none';
     $('homeYaw').disabled = $('homePitch').disabled = !!g.homing || !ready;
     document.querySelectorAll('.pad button').forEach(b => b.disabled = !!g.homing);
-    if (!moving) setPad(g.manualYaw || 0, g.manualPitch || 0);
+    if (!pad.moving) pad.show(g.manualYaw || 0, g.manualPitch || 0);
     // settings
     if (focused() !== 'url') $('url').value = cfg.rtmpUrl || '';
     $('streamAuto').checked = cfg.streamAutoStart; $('recAuto').checked = cfg.recordAutoStart;
@@ -465,92 +470,28 @@ async function refreshLog() {
   } catch (e) {}
 }
 
-// ---- manual gimbal control: hold-to-move (pointer + keyboard), repeated while held, stop on release ----
-// The browser sends requests over parallel connections, so a stop could be processed BEFORE the move
-// issued just before it. Every move/stop therefore carries a client id + sequence number and the server
-// drops anything older than the newest it has seen from this client. Keep-alives are skipped while one
-// is still in flight, so they never pile up behind a slow response.
-let moving = null, moveTimer = null, moveSeq = 0, moveInFlight = false;
-// Pad centre = the motion the gimbal is being told right now (dot when idle). While this page holds a
-// button it shows the local command; otherwise it mirrors the phone's status (phone pad, other browser).
-function padSymbol(y, p) {
-  if (!y && !p) return String.fromCodePoint(0x25CF);
-  if (y > 0 && p > 0) return String.fromCodePoint(0x2197); if (y < 0 && p > 0) return String.fromCodePoint(0x2196);
-  if (y > 0 && p < 0) return String.fromCodePoint(0x2198); if (y < 0 && p < 0) return String.fromCodePoint(0x2199);
-  if (y > 0) return String.fromCodePoint(0x25B6); if (y < 0) return String.fromCodePoint(0x25C0);
-  return p > 0 ? String.fromCodePoint(0x25B2) : String.fromCodePoint(0x25BC);
-}
-function setPad(y, p) { const c = $('padc'); c.textContent = padSymbol(y, p); c.classList.toggle('on', !!(y || p)); }
-const cid = Math.random().toString(36).slice(2, 8);
-function ctl(path) { return post(`${path}${path.includes('?') ? '&' : '?'}cid=${cid}&seq=${++moveSeq}`); }
-function sendMove(y, p) { const spd = +$('spd').value; return ctl(`/api/gimbal/move?yaw=${y * spd}&pitch=${p * spd}`); }
-function startMove(y, p) {
-  if (moving) return; moving = [y, p];
-  setPad(y, p);
-  sendMove(y, p);
-  moveTimer = setInterval(() => {
-    if (moveInFlight) return;
-    moveInFlight = true; sendMove(y, p).finally(() => { moveInFlight = false; });
-  }, 300);
-}
-function stopMove() {
-  if (!moving) return; moving = null; clearInterval(moveTimer); moveTimer = null;
-  setPad(0, 0); ctl('/api/gimbal/stop');
-}
-document.querySelectorAll('.pad button[data-yaw]').forEach(b => {
-  const y = +b.dataset.yaw, p = +b.dataset.pitch;
-  b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); startMove(y, p); });
-  b.addEventListener('contextmenu', e => e.preventDefault());            // iOS long-press callout
-  b.addEventListener('touchstart', e => e.preventDefault(), { passive: false });   // iOS text selection / magnifier
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, stopMove));
-});
-const KEYS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
-document.addEventListener('keydown', e => { if (KEYS[e.key] && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); startMove(...KEYS[e.key]); } });
-document.addEventListener('keyup', e => { if (KEYS[e.key]) stopMove(); });
-window.addEventListener('blur', stopMove);
+// ---- manual gimbal control (hold-to-move; shared logic in control.js) ----
+const pad = CamLeon.pad({ buttons: document.querySelectorAll('.pad button[data-yaw]'), centre: $('padc'), speed: () => +$('spd').value });
 
 function sendOp() { post(`/api/ble/op?op=${encodeURIComponent($('op').value.trim())}&payload=${encodeURIComponent($('payload').value.trim())}`).then(refreshLog); }
 function sendRaw() { post('/api/ble/send?hex=' + encodeURIComponent($('raw').value)).then(refreshLog); }
 function crcInit(v) { post('/api/ble/crcinit?value=' + v).then(refreshLog); }
 
-// ---- WebRTC live preview: starts automatically when the page opens; manual stop/start ----
-let pc = null, pcId = null, previewWanted = true;
-function manualStartPreview() { pvNoPath = false; startPreview(); }
-async function startPreview() {
-  if (pc) return; previewWanted = true;
-  pc = new RTCPeerConnection({ iceServers: [] });
-  pc.addTransceiver('video', { direction: 'recvonly' });
-  pc.ontrack = e => { $('pv').srcObject = e.streams[0] || new MediaStream([e.track]); };
-  pc.onconnectionstatechange = () => {
-    if (!pc) return;
-    $('pvinfo').textContent = t('pv_' + pc.connectionState);
-    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-      teardownPreview(); $('pvinfo').textContent = t('pv_nopath'); pvNoPath = true;
-      $('pvmsg').innerHTML = '<span style="color:var(--err)">' + t('pv_nopath_title') + '</span> ' + t('pv_nopath_text');
-    }
-  };
-  $('pvinfo').textContent = t('pv_connecting'); $('pvmsg').textContent = '';
-  const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-  await new Promise(res => { if (pc.iceGatheringState === 'complete') res();
-    else pc.addEventListener('icegatheringstatechange', () => pc.iceGatheringState === 'complete' && res()); setTimeout(res, 1500); });
-  try {
-    const r = await fetch('/api/webrtc/offer', { method: 'POST', headers: { 'Content-Type': 'application/sdp' }, body: pc.localDescription.sdp });
-    if (!r.ok) throw new Error(await r.text());
-    const a = await r.json(); pcId = a.id;
-    await pc.setRemoteDescription({ type: 'answer', sdp: a.sdp });
-    $('pvstart').style.display = 'none'; $('pvstop').style.display = '';
-  } catch (e) { teardownPreview(); $('pvmsg').innerHTML = '<span style="color:var(--err)">' + t('pv_failed') + '</span> ' + e.message; }
-}
-function teardownPreview() {
-  if (pcId) { post('/api/webrtc/stop?id=' + pcId); pcId = null; }
-  if (pc) { pc.close(); pc = null; }
-  $('pv').srcObject = null; $('pvstart').style.display = ''; $('pvstop').style.display = 'none'; $('pvinfo').textContent = '';
-}
-function stopPreview() { previewWanted = false; teardownPreview(); }
-// Auto-start / auto-recover the preview: keep retrying while the app is reachable (e.g. after an app
-// restart), but stop after an ICE "no media path" failure — that is a network property, not transient.
-let pvNoPath = false;
-function autoPreview() { if (!pc && previewWanted && !pvNoPath) startPreview(); }
+// ---- WebRTC live preview (shared logic in control.js): auto-start, manual stop/start ----
+const preview = CamLeon.preview({
+  video: $('pv'),
+  onState: s => { $('pvinfo').textContent = t('pv_' + s); if (s === 'connecting') $('pvmsg').textContent = ''; },
+  onStarted: () => { $('pvstart').style.display = 'none'; $('pvstop').style.display = ''; },
+  onStopped: () => { $('pvstart').style.display = ''; $('pvstop').style.display = 'none'; $('pvinfo').textContent = ''; },
+  onFailed: (kind, detail) => {
+    if (kind === 'nopath') { $('pvinfo').textContent = t('pv_nopath'); $('pvmsg').innerHTML = '<span style="color:var(--err)">' + t('pv_nopath_title') + '</span> ' + t('pv_nopath_text'); }
+    else if (kind === 'failed') $('pvmsg').innerHTML = '<span style="color:var(--err)">' + t('pv_failed') + '</span> ' + detail;
+    else $('pvmsg').textContent = t('pv_blocked');
+  },
+});
+function manualStartPreview() { preview.start(); }
+function stopPreview() { preview.stop(); }
+const autoPreview = () => preview.auto();
 
 // developer card: debug builds only, opened with ?dev
 const DEV = /[?&]dev\b/.test(location.search);
