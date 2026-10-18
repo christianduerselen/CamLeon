@@ -250,6 +250,14 @@ private fun GimbalLinkCard(bleState: ChameleonBleClient.ConnState) {
                 if (remembered != null) TextButton(onClick = { CaptureSession.forgetGimbal() }) { Text(stringResource(R.string.forget)) }
                 TextButton(onClick = { CaptureSession.bleScan() }) { Text(stringResource(R.string.scan)) }
             }
+            // The remembered gimbal is always offered first (no scan needed — right after a disconnect it
+            // does not advertise yet anyway); connecting it resumes auto-connect.
+            remembered?.takeIf { r -> found.none { it.address == r.address } }?.let { r ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("${r.name ?: r.address} · ${stringResource(R.string.last_used)}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { CaptureSession.reconnectNow() }) { Text(stringResource(R.string.connect)) }
+                }
+            }
             if (found.isNotEmpty()) {
                 found.take(5).forEach { d ->
                     Row(verticalAlignment = Alignment.CenterVertically) {

@@ -55,8 +55,15 @@ class GimbalLink(context: Context, private val ble: ChameleonBleClient) {
     fun forget() { prefs.edit().remove("address").remove("name").apply(); _remembered.value = null }
     fun setAutoConnect(on: Boolean) { prefs.edit().putBoolean("auto", on).apply(); _autoConnect.value = on; if (on) kick() }
 
-    /** User-initiated disconnect: drop the link and hold the auto-connect loop. */
-    fun disconnectManually() { paused = true; _phase.value = "disconnected by user"; ble.disconnect() }
+    /**
+     * User-initiated disconnect: drop the link and hold the auto-connect loop. Then one scan, so the list
+     * shows what is in range (the gimbal advertises again within a second — measured) and the user can
+     * pick it or another one; nothing is connected automatically while paused.
+     */
+    fun disconnectManually() {
+        paused = true; _phase.value = "disconnected by user"; ble.disconnect()
+        scope.launch { delay(500); if (paused && ble.state.value != ChameleonBleClient.ConnState.READY) ble.startScan(12_000) }
+    }
 
     /** Start the supervision loop (call once BLE permissions are granted). Safe to call repeatedly. */
     fun start() {

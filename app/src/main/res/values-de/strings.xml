@@ -36,6 +36,7 @@
     <string name="connected">verbunden</string>
     <string name="disconnect">Trennen</string>
     <string name="connect_now">Jetzt verbinden</string>
+    <string name="last_used">zuletzt verbunden</string>
     <string name="connect">Verbinden</string>
     <string name="auto_connect">Automatisch verbinden</string>
     <string name="forget">Vergessen</string>

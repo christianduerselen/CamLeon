@@ -41,6 +41,7 @@
     <string name="connected">connected</string>
     <string name="disconnect">Disconnect</string>
     <string name="connect_now">Connect now</string>
+    <string name="last_used">last used</string>
     <string name="connect">Connect</string>
     <string name="auto_connect">Auto-connect</string>
     <string name="forget">Forget</string>
