@@ -166,6 +166,8 @@
         <label data-i18n="quality">Quality</label>
         <select id="quality" onchange="setSetting({quality:this.value})"></select>
         <div id="fpsnote" class="mut" style="margin:4px 0"></div>
+        <label data-i18n="previewQuality">Browser preview (per viewer, 30 fps)</label>
+        <select id="previewQuality" onchange="setSetting({previewQuality:this.value})"></select>
         <div class="chk"><input type="checkbox" id="audio" onchange="setSetting({audio:this.checked})"><span data-i18n="audio">Audio</span></div>
 
         <h2 style="margin-top:16px"><span data-i18n="tracking">Tracking</span> <span id="lkTracking" class="mut"></span></h2>
@@ -291,7 +293,7 @@ const I18N = {
     battery: 'Akku', onPower: 'am Strom', onBattery: 'Akkubetrieb', temp: 'Temperatur', free: 'frei', recLeft: 'Aufnahme',
     th_none: 'normal', th_light: 'leicht erhöht', th_moderate: 'erhöht', th_severe: 'hoch — Handy drosselt', th_critical: 'kritisch', th_emergency: 'kritisch', th_shutdown: 'kritisch — schaltet ab', th_unknown: '—',
     streamAuto: 'Streaming beim App-Start automatisch starten', recAuto: 'Aufnahme beim App-Start automatisch starten',
-    filesHint: 'Dateien: öffentlicher Ordner Movies/CamLeon (Galerie, Eigene Dateien, USB)', video: 'Video · Stream + Aufnahme', quality: 'Qualität', audio: 'Audio',
+    filesHint: 'Dateien: öffentlicher Ordner Movies/CamLeon (Galerie, Eigene Dateien, USB)', video: 'Video · Stream + Aufnahme', quality: 'Qualität', audio: 'Audio', previewQuality: 'Browser-Vorschau (je Betrachter, 30 fps)',
     // dynamic
     gimbal: 'Gimbal', last: 'zuletzt', noRemembered: 'kein Gimbal gemerkt', connect: 'Verbinden', noName: '(ohne Namen)',
     sdkRunning: 'Gimbal-SDK läuft', starting: 'startet…', idle: 'bereit', connectFirst: 'zuerst den Gimbal verbinden',
@@ -433,6 +435,9 @@ async function refresh() {
       qsel.innerHTML = qlist.map(q => `<option value="${q.id}">${q.label}</option>`).join('');
     }
     $('quality').value = cfg.quality; $('audio').checked = cfg.audioEnabled; $('screenMode').value = cfg.screenMode || 'ON';
+    const psel = $('previewQuality'), plist = (s.preview && s.preview.previewQualities) || [];
+    if (plist.length && psel.options.length !== plist.length) psel.innerHTML = plist.map(q => `<option value="${q.id}">${q.label}</option>`).join('');
+    psel.value = cfg.previewQuality || 'P540';
     const pv = s.preview || {};
     $('fpsnote').textContent = (pv.cameraMaxFps && pv.requestedFps > pv.cameraMaxFps)
       ? `${t('cameraMax')} ${pv.cameraMaxFps} ${t('fpsStreaming')} ${pv.capture}`

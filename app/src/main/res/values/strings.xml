@@ -97,6 +97,7 @@
     <string name="files_hint">Files go to the public Movies/CamLeon folder (Gallery, Files app, USB).</string>
     <string name="video_section">Video (stream + recording)</string>
     <string name="audio">Audio</string>
+    <string name="preview_chip">Browser preview: %1$s</string>
     <string name="display_section">Phone display</string>
     <string name="scr_on">keep on</string>
     <string name="scr_dim">dim (tap to wake)</string>

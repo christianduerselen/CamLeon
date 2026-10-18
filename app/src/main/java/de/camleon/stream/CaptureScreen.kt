@@ -416,6 +416,7 @@ private fun SwitchCard(title: String, checked: Boolean, onToggle: (Boolean) -> U
 private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange: (CaptureSettings) -> Unit) {
     var url by remember(s.rtmpUrl) { mutableStateOf(s.rtmpUrl) }
     var qualityMenu by remember { mutableStateOf(false) }
+    var previewMenu by remember { mutableStateOf(false) }
     var modeMenu by remember { mutableStateOf(false) }
     var variantMenu by remember { mutableStateOf(false) }
     val dim = MaterialTheme.colorScheme.onSurfaceVariant
@@ -443,6 +444,15 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
                 }
             }
             ToggleRow(stringResource(R.string.audio), s.audioEnabled, enabled = !lk.video) { onChange(s.copy(audioEnabled = it)) }
+            // Browser preview cap: independent of the encoder, so never locked
+            Box {
+                FilterChip(selected = true, onClick = { previewMenu = true }, label = { Text(stringResource(R.string.preview_chip, s.previewQuality.label)) })
+                DropdownMenu(expanded = previewMenu, onDismissRequest = { previewMenu = false }) {
+                    CaptureSettings.PreviewQuality.entries.forEach { q ->
+                        DropdownMenuItem(text = { Text(q.label) }, onClick = { onChange(s.copy(previewQuality = q)); previewMenu = false })
+                    }
+                }
+            }
             HorizontalDivider()
 
             // ---------------- Tracking ----------------

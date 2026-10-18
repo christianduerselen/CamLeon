@@ -293,15 +293,28 @@ class WebRtcCamera(private val context: Context) {
         pc.setLocalDescription(answer)
             .getOrElse { closePeer(id); error("setLocalDescription: ${it.message}") }
         applyPreviewLimits(id, videoTransceiver.sender)
+        senders[id] = videoTransceiver.sender
         gathered.await(2, TimeUnit.SECONDS)
         val sdp = pc.localDescription?.description ?: answer.description
         Log.i(TAG, "[$id] answer ready (${peers.size} viewer(s))")
         return Answer(id, sdp)
     }
 
+    /** Browser preview cap per viewer (height / bitrate, 30 fps) — from the settings, applied live to every viewer. */
+    @Volatile private var previewMaxHeight = 540
+    @Volatile private var previewMaxBitrateBps = 1_500_000
+    private val senders = ConcurrentHashMap<String, org.webrtc.RtpSender>()
+    fun setPreviewLimits(maxHeight: Int, maxBitrateBps: Int) {
+        if (maxHeight == previewMaxHeight && maxBitrateBps == previewMaxBitrateBps) return
+        previewMaxHeight = maxHeight; previewMaxBitrateBps = maxBitrateBps
+        senders.forEach { (id, s) -> applyPreviewLimits(id, s) }
+        Log.i(TAG, "preview limits now ${maxHeight}p / ${maxBitrateBps / 1000} kbps (${senders.size} viewer(s) updated)")
+    }
+
     /**
-     * Browser preview is for watching and re-aiming, not for detail: cap it at 540p / 30 fps / 1.5 Mbps
-     * per viewer regardless of the capture format (each viewer has its own encoder; less heat).
+     * Browser preview is for watching and re-aiming, not for detail: cap it at [previewMaxHeight] /
+     * 30 fps / [previewMaxBitrateBps] per viewer (each viewer has its own encoder; less heat). The cap
+     * never upscales: a 720p capture stays 720p whatever the setting.
      * On a weak link keep the frame rate and drop resolution, so manual control stays fluid.
      * Must run after setLocalDescription: before negotiation the sender of a transceiver created by the
      * browser's offer has no encodings yet, and the limits would silently not apply.
@@ -309,8 +322,8 @@ class WebRtcCamera(private val context: Context) {
     private fun applyPreviewLimits(id: String, sender: org.webrtc.RtpSender) = runCatching {
         val params = sender.parameters
         params.encodings.forEach { e ->
-            e.maxFramerate = 30; e.maxBitrateBps = PREVIEW_MAX_BITRATE_BPS
-            e.scaleResolutionDownBy = if (height > PREVIEW_MAX_HEIGHT) height / PREVIEW_MAX_HEIGHT.toDouble() else 1.0
+            e.maxFramerate = 30; e.maxBitrateBps = previewMaxBitrateBps
+            e.scaleResolutionDownBy = if (height > previewMaxHeight) height / previewMaxHeight.toDouble() else 1.0
         }
         params.degradationPreference = RtpParameters.DegradationPreference.MAINTAIN_FRAMERATE
         val ok = sender.setParameters(params)
@@ -320,6 +333,7 @@ class WebRtcCamera(private val context: Context) {
     private val disconnectTimers = ConcurrentHashMap<String, Runnable>()
     fun closePeer(id: String) {
         disconnectTimers.remove(id)?.let { main.removeCallbacks(it) }
+        senders.remove(id)
         peers.remove(id)?.let { runCatching { it.close() } }
     }
     fun viewerCount() = peers.size
@@ -399,8 +413,6 @@ class WebRtcCamera(private val context: Context) {
 
     private companion object {
         const val TAG = "WebRtcCamera"
-        const val PREVIEW_MAX_HEIGHT = 540
-        const val PREVIEW_MAX_BITRATE_BPS = 1_500_000
         const val DISCONNECT_GRACE_MS = 10_000L
     }
 }

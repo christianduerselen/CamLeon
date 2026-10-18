@@ -90,6 +90,7 @@
     <string name="files_hint">Dateien landen im öffentlichen Ordner Movies/CamLeon (Galerie, Eigene Dateien, USB).</string>
     <string name="video_section">Video (Stream + Aufnahme)</string>
     <string name="audio">Audio</string>
+    <string name="preview_chip">Browser-Vorschau: %1$s</string>
     <string name="display_section">Handy-Display</string>
     <string name="scr_on">an lassen</string>
     <string name="scr_dim">abdunkeln (Tippen weckt)</string>

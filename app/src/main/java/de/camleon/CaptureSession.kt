@@ -83,6 +83,7 @@ object CaptureSession {
         // supported here (e.g. after moving to another phone) falls back to the best supported one.
         _settings.value = CaptureSettings.load(appContext).let { it.copy(quality = coerceQuality(it.quality)) }
             .also { CaptureSettings.save(appContext, it) }
+        camera.setPreviewLimits(_settings.value.previewQuality.height, _settings.value.previewQuality.bitrateBps)
         media = MediaPipeline(appContext, WebRtcVideoSource(camera)).also { it.updateSettings(_settings.value) }
         recordings = Recordings(appContext) { media.currentRecordPath() }
         ble = ChameleonBleClient(appContext).also { it.onFrame = ::onGimbalFrame }
@@ -158,6 +159,7 @@ object CaptureSession {
      *  - streaming (RTMP URL, auto-start) while streaming,
      *  - recording (auto-start) while recording,
      *  - video     (quality, audio) while streaming OR recording — the encoder cannot be re-prepared mid-run.
+     *  The browser preview quality is never locked: it only changes the per-viewer WebRTC encoders.
      * Locked groups keep their old values no matter where the change comes from (phone, web, API).
      */
     data class Locks(val tracking: Boolean, val streaming: Boolean, val recording: Boolean) {
@@ -187,6 +189,7 @@ object CaptureSession {
         _settings.value = new
         CaptureSettings.save(appContext, new)
         media.updateSettings(new)
+        camera.setPreviewLimits(new.previewQuality.height, new.previewQuality.bitrateBps)   // live, no lock: independent of the encoder
         if (modeChanged && gimbalReady()) ble.sendRaw(GimbalCommands.chooseMode(modeId()), "chooseMode(${modeId()})")
         // Tracking parameters are locked while the SDK runs (see trackingParamsLocked); they take effect at the next tracking start.
     }
@@ -547,7 +550,8 @@ object CaptureSession {
             put("modes", de.camleon.stream.ChameleonModes.toJson())
             put("preview", JSONObject().apply { put("cameraStarted", camera.started); put("cameraLost", camera.lost); put("viewers", camera.viewerCount())
                 put("capture", "${camera.width}x${camera.height}@${camera.effectiveFps()}"); put("requestedFps", camera.fps); put("cameraMaxFps", camera.maxFpsFor(camera.width, camera.height));
-                put("supportedQualities", org.json.JSONArray().apply { supportedQualities().forEach { q -> put(JSONObject().put("id", q.name).put("label", q.label)) } }); camera.lastError?.let { put("error", it) } })
+                put("supportedQualities", org.json.JSONArray().apply { supportedQualities().forEach { q -> put(JSONObject().put("id", q.name).put("label", q.label)) } });
+                put("previewQualities", org.json.JSONArray().apply { CaptureSettings.PreviewQuality.entries.forEach { q -> put(JSONObject().put("id", q.name).put("label", q.label)) } }); camera.lastError?.let { put("error", it) } })
             put("settings", s.toJson())
             put("link", linkJson())
             put("ble", JSONObject().apply {

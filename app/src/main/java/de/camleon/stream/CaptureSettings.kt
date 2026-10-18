@@ -21,6 +21,8 @@ data class CaptureSettings(
     // --- Video (shared by stream, recording and preview)
     val quality: Quality = Quality.P720,
     val audioEnabled: Boolean = true,
+    // --- Browser preview (WebRTC): cap per viewer, independent of the stream/recording encoder
+    val previewQuality: PreviewQuality = PreviewQuality.P540,
     // --- Phone display while capturing (24/7 use: the foreground service keeps camera/stream alive
     //     with the screen off, so the display can be dimmed or allowed to time out)
     val screenMode: ScreenMode = ScreenMode.ON,
@@ -36,6 +38,14 @@ data class CaptureSettings(
         P1080_60("1080p · 60fps · 6 Mbps", 1920, 1080, 60, 6_000_000),
     }
 
+    /** Browser preview cap per viewer (always 30 fps; never above the capture resolution). */
+    enum class PreviewQuality(val label: String, val height: Int, val bitrateBps: Int) {
+        P360("360p · 0.8 Mbps", 360, 800_000),
+        P540("540p · 1.5 Mbps", 540, 1_500_000),
+        P720("720p · 2.5 Mbps", 720, 2_500_000),
+        P1080("1080p · 4 Mbps", 1080, 4_000_000),
+    }
+
     fun isUrlValid(): Boolean =
         Regex("^rtmps?://[\\w.\\-]+(:\\d+)?(/[\\w\\-./?%&=]*)?$", RegexOption.IGNORE_CASE)
             .matches(rtmpUrl.trim())
@@ -47,6 +57,7 @@ data class CaptureSettings(
         put("trackingAutoStart", trackingAutoStart)
         put("quality", quality.name)
         put("audioEnabled", audioEnabled)
+        put("previewQuality", previewQuality.name)
         put("screenMode", screenMode.name)
         put("tracking", tracking.toJson())
     }
@@ -59,6 +70,7 @@ data class CaptureSettings(
         trackingAutoStart = p["trackingAutoStart"]?.toBooleanStrictOrNull() ?: trackingAutoStart,
         quality = p["quality"]?.let { q -> Quality.entries.firstOrNull { it.name == q } } ?: quality,
         audioEnabled = (p["audio"] ?: p["audioEnabled"])?.toBooleanStrictOrNull() ?: audioEnabled,
+        previewQuality = p["previewQuality"]?.let { q -> PreviewQuality.entries.firstOrNull { it.name.equals(q, true) } } ?: previewQuality,
         screenMode = p["screenMode"]?.let { m -> ScreenMode.entries.firstOrNull { it.name.equals(m, true) } } ?: screenMode,
         tracking = tracking.applyParams(p),
     )
@@ -74,6 +86,7 @@ data class CaptureSettings(
             trackingAutoStart = o.optBoolean("trackingAutoStart", false),
             quality = runCatching { Quality.valueOf(o.optString("quality", Quality.P720.name)) }.getOrDefault(Quality.P720),
             audioEnabled = o.optBoolean("audioEnabled", true),
+            previewQuality = runCatching { PreviewQuality.valueOf(o.optString("previewQuality", PreviewQuality.P540.name)) }.getOrDefault(PreviewQuality.P540),
             screenMode = runCatching { ScreenMode.valueOf(o.optString("screenMode", ScreenMode.ON.name)) }.getOrDefault(ScreenMode.ON),
             tracking = o.optJSONObject("tracking")?.let { TrackingSettings.fromJson(it) } ?: TrackingSettings(),
         )
