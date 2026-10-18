@@ -19,6 +19,49 @@ streaming and local recording, plus a browser control page with live preview in 
   at 1080p for apps (e.g. moto g51 5G: yes; Galaxy S22 Ultra: no). At 60 fps the exposure time is
   at most 1/60 s, so in dim light the picture gets darker or noisier than at 30 fps.
 
+## At a glance
+
+The live picture in these screenshots is a drawn placeholder (`docs/tools/placeholder-court.svg`); the
+real thing shows the camera. App and pages are available in English and German (device language).
+
+<p align="center"><img src="docs/img/app.png" alt="CamLeon app on the phone: live picture, QR code for the browser control, the three switches, status" width="900"></p>
+
+*The app on the phone (landscape, mounted on the gimbal): live picture and QR code for the browser
+control on the left, the three switches Tracking / Streaming / Recording and the status on the right.*
+
+<table>
+<tr>
+<td width="55%" valign="top"><img src="docs/img/control-page.png" alt="Browser control page: gimbal link, live preview, pad, the three switches, status, settings"></td>
+<td width="45%" valign="top"><img src="docs/img/remote-portrait.png" alt="Remote view on a phone in portrait: the picture as a band in the middle, controls below"></td>
+</tr>
+<tr>
+<td><em>Control page <code>http://&lt;phone-ip&gt;:8080</code>: gimbal link, live preview, pan/tilt pad, the three switches, status, settings.</em></td>
+<td><em>Remote view <code>/remote</code> on a phone held upright: the controls sit in the black area below the picture.</em></td>
+</tr>
+</table>
+
+<p align="center"><img src="docs/img/remote-landscape.png" alt="Remote view on a tablet in landscape: full-screen picture with half-transparent switches, battery, pad and speed" width="900"></p>
+
+*Remote view on a tablet: the picture fills the screen, the switches, battery, pad and speed float on top.*
+
+<p align="center"><img src="docs/img/recordings.png" alt="Recordings page: list of MP4 files with play, download and delete" width="820"></p>
+
+*Recordings page `/recordings`: play in the browser, download, delete.*
+
+## How it works
+
+![System overview: gimbal, phone with the CamLeon app, browser, RTMP server and MP4 files](docs/img/system-overview.svg)
+
+The gimbal tracks on its own; the phone selects the mode, starts and stops it and sends manual pan/tilt
+over Bluetooth LE. Everything the phone does is controllable from a browser in the same Wi-Fi.
+
+![Video path: one camera, one H.264 encoder for stream and recording, one WebRTC encoder per browser viewer](docs/img/video-path.svg)
+
+One camera feeds everything: the H.264 encoder for stream and recording at the full capture format,
+and one WebRTC encoder per browser viewer at the preview quality (30 fps, no audio).
+
+![Browser pages: control page, remote view, recordings, all on the REST API](docs/img/browser-pages.svg)
+
 ## Background operation and quitting
 
 CamLeon keeps running when its window is closed or the screen is locked: a foreground service
@@ -155,6 +198,10 @@ when power is connected and does not drop back right after unplugging
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+Screenshots in `docs/img` are made with `docs/tools/screenshots.py` (headless Chrome against the running
+app, live picture replaced by the placeholder); the app picture is an `adb screencap` with the placeholder
+pasted over the preview.
 
 `app/src/main/java/org/webrtc/FpsCamera2Session.java` is a modified copy of WebRTC's
 `Camera2Session` (BSD-3-Clause, © The WebRTC project authors; original header kept).

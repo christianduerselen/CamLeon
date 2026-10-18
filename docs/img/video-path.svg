@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="330" viewBox="0 0 960 330" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="960" height="330" fill="#ffffff"/>
+
+  <!-- camera -->
+  <rect x="20" y="105" width="190" height="90" rx="12" fill="#e8f0fe" stroke="#4f9cff" stroke-width="1.5"/>
+  <text x="115" y="135" text-anchor="middle" font-weight="700" fill="#24292f">Phone camera</text>
+  <text x="115" y="156" text-anchor="middle" font-size="12" fill="#57606a">720p / 1080p · 30 or 60 fps</text>
+  <text x="115" y="176" text-anchor="middle" font-size="12" fill="#57606a">"Quality" setting</text>
+
+  <!-- microphone -->
+  <rect x="20" y="225" width="190" height="60" rx="12" fill="#e8f0fe" stroke="#4f9cff" stroke-width="1.5"/>
+  <text x="115" y="250" text-anchor="middle" font-weight="700" fill="#24292f">Microphone</text>
+  <text x="115" y="270" text-anchor="middle" font-size="12" fill="#57606a">"Audio" on / off</text>
+
+  <!-- fan-out -->
+  <rect x="270" y="105" width="170" height="90" rx="12" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="355" y="135" text-anchor="middle" font-weight="700" fill="#24292f">Fan-out</text>
+  <text x="355" y="156" text-anchor="middle" font-size="12" fill="#57606a">one camera, every frame</text>
+  <text x="355" y="176" text-anchor="middle" font-size="12" fill="#57606a">goes to all outputs</text>
+  <line x1="212" y1="150" x2="268" y2="150" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- encoder (stream + recording) -->
+  <rect x="500" y="40" width="230" height="110" rx="12" fill="#fff4e5" stroke="#d9a35c" stroke-width="1.5"/>
+  <text x="615" y="68" text-anchor="middle" font-weight="700" fill="#24292f">One H.264 encoder</text>
+  <text x="615" y="90" text-anchor="middle" font-size="12" fill="#57606a">full capture resolution and frame rate</text>
+  <text x="615" y="110" text-anchor="middle" font-size="12" fill="#57606a">+ AAC audio when enabled</text>
+  <text x="615" y="134" text-anchor="middle" font-size="12" fill="#57606a">(RootEncoder)</text>
+  <line x1="442" y1="135" x2="498" y2="100" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <path d="M212,255 L470,255 L470,120 L498,120" fill="none" stroke="#57606a" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a)"/>
+
+  <rect x="790" y="30" width="150" height="50" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="865" y="60" text-anchor="middle" font-weight="700" fill="#24292f">RTMP stream</text>
+  <rect x="790" y="100" width="150" height="50" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="865" y="130" text-anchor="middle" font-weight="700" fill="#24292f">MP4 recording</text>
+  <line x1="732" y1="80" x2="788" y2="60" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="732" y1="110" x2="788" y2="124" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- preview encoders -->
+  <rect x="500" y="190" width="230" height="110" rx="12" fill="#e6f4ea" stroke="#3ecf8e" stroke-width="1.5"/>
+  <text x="615" y="218" text-anchor="middle" font-weight="700" fill="#24292f">WebRTC encoder per viewer</text>
+  <text x="615" y="240" text-anchor="middle" font-size="12" fill="#57606a">"Browser preview" setting:</text>
+  <text x="615" y="260" text-anchor="middle" font-size="12" fill="#57606a">360p … 1080p, 30 fps, no audio</text>
+  <text x="615" y="284" text-anchor="middle" font-size="12" fill="#57606a">(libwebrtc)</text>
+  <line x1="442" y1="165" x2="498" y2="220" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <rect x="790" y="220" width="150" height="50" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="865" y="241" text-anchor="middle" font-weight="700" fill="#24292f">Browser viewers</text>
+  <text x="865" y="259" text-anchor="middle" font-size="12" fill="#57606a">/ and /remote</text>
+  <line x1="732" y1="245" x2="788" y2="245" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+</svg>

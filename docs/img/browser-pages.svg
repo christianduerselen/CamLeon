@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,1 L9,5 L0,9 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="960" height="420" fill="#ffffff"/>
+
+  <!-- address bar -->
+  <rect x="20" y="20" width="920" height="44" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="40" y="48" font-family="Consolas, monospace" font-size="15" fill="#24292f">http://&lt;phone-ip&gt;:8080</text>
+  <text x="920" y="48" text-anchor="end" font-size="12" fill="#57606a">served by the app · QR code on the phone screen · same Wi-Fi, no internet needed</text>
+
+  <!-- control page -->
+  <rect x="20" y="90" width="290" height="240" rx="12" fill="#e6f4ea" stroke="#3ecf8e" stroke-width="1.5"/>
+  <text x="165" y="118" text-anchor="middle" font-weight="700" fill="#24292f"><tspan font-family="Consolas, monospace">/</tspan>  Control page</text>
+  <text x="165" y="138" text-anchor="middle" font-size="12" fill="#57606a">everything, for setup and during the game</text>
+  <text x="40" y="168" font-size="13" fill="#24292f">• gimbal link (scan, connect, forget)</text>
+  <text x="40" y="192" font-size="13" fill="#24292f">• live preview + pan/tilt pad, speed</text>
+  <text x="40" y="216" font-size="13" fill="#24292f">• switches: Tracking · Streaming · Recording</text>
+  <text x="40" y="240" font-size="13" fill="#24292f">• status: phone + gimbal battery, heat, space</text>
+  <text x="40" y="264" font-size="13" fill="#24292f">• settings: quality, audio, preview quality,</text>
+  <text x="54" y="284" font-size="13" fill="#24292f">sport / field / age, RTMP URL, auto-start</text>
+  <text x="40" y="312" fill="#57606a">English / German</text>
+
+  <!-- remote -->
+  <rect x="335" y="90" width="290" height="240" rx="12" fill="#e6f4ea" stroke="#3ecf8e" stroke-width="1.5"/>
+  <text x="480" y="118" text-anchor="middle" font-weight="700" fill="#24292f"><tspan font-family="Consolas, monospace">/remote</tspan>  Full-screen view</text>
+  <text x="480" y="138" text-anchor="middle" font-size="12" fill="#57606a">correcting the camera from phone or tablet</text>
+  <text x="355" y="168" font-size="13" fill="#24292f">• the live picture fills the screen</text>
+  <text x="355" y="192" font-size="13" fill="#24292f">• half-transparent overlay: the three</text>
+  <text x="369" y="212" font-size="13" fill="#24292f">switches, battery, pad, speed</text>
+  <text x="355" y="240" font-size="13" fill="#24292f">• a nudge overrides tracking; tracking</text>
+  <text x="369" y="260" font-size="13" fill="#24292f">takes over again afterwards</text>
+  <text x="355" y="288" font-size="13" fill="#24292f">• keeps the screen awake</text>
+  <text x="355" y="312" fill="#57606a">iOS: add to the home screen for full screen</text>
+
+  <!-- recordings -->
+  <rect x="650" y="90" width="290" height="240" rx="12" fill="#e6f4ea" stroke="#3ecf8e" stroke-width="1.5"/>
+  <text x="795" y="118" text-anchor="middle" font-weight="700" fill="#24292f"><tspan font-family="Consolas, monospace">/recordings</tspan>  Files</text>
+  <text x="795" y="138" text-anchor="middle" font-size="12" fill="#57606a">the MP4s on the phone</text>
+  <text x="670" y="168" font-size="13" fill="#24292f">• list with date, length and size</text>
+  <text x="670" y="192" font-size="13" fill="#24292f">• play in the browser (seeking works)</text>
+  <text x="670" y="216" font-size="13" fill="#24292f">• download to the PC</text>
+  <text x="670" y="240" font-size="13" fill="#24292f">• delete</text>
+  <text x="670" y="312" fill="#57606a">files also visible in Gallery / Files / over USB</text>
+
+  <!-- API bar -->
+  <line x1="165" y1="332" x2="165" y2="368" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="480" y1="332" x2="480" y2="368" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="795" y1="332" x2="795" y2="368" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="20" y="370" width="920" height="36" rx="10" fill="#e8f0fe" stroke="#4f9cff" stroke-width="1.5"/>
+  <text x="480" y="394" text-anchor="middle" font-size="13" fill="#24292f"><tspan font-weight="700">REST API</tspan>  /api/status · /api/tracking · /api/streaming · /api/recording · /api/settings · /api/gimbal/…      <tspan font-weight="700">WebRTC</tspan>  /api/webrtc/offer</text>
+</svg>

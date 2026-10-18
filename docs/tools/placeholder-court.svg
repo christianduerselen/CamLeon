@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7dde6"/><stop offset="1" stop-color="#b9c3cf"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c99a5b"/><stop offset="1" stop-color="#e2b77a"/></linearGradient>
+    <linearGradient id="stand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b4a5e"/><stop offset="1" stop-color="#55657a"/></linearGradient>
+  </defs>
+  <!-- hall: back wall, stands, floor -->
+  <rect width="1920" height="1080" fill="url(#wall)"/>
+  <rect x="0" y="330" width="1920" height="120" fill="url(#stand)"/>
+  <g fill="#8a98ab" opacity=".55">
+    <rect x="0" y="350" width="1920" height="4"/><rect x="0" y="380" width="1920" height="4"/><rect x="0" y="410" width="1920" height="4"/>
+  </g>
+  <!-- spectators (dots) -->
+  <g opacity=".7">
+    <circle cx="140" cy="372" r="7" fill="#e5533d"/><circle cx="260" cy="402" r="7" fill="#f2d16b"/><circle cx="380" cy="368" r="7" fill="#eee"/><circle cx="520" cy="398" r="7" fill="#4f9cff"/>
+    <circle cx="700" cy="372" r="7" fill="#e5533d"/><circle cx="860" cy="404" r="7" fill="#eee"/><circle cx="1010" cy="370" r="7" fill="#f2d16b"/><circle cx="1180" cy="400" r="7" fill="#4f9cff"/>
+    <circle cx="1330" cy="372" r="7" fill="#eee"/><circle cx="1470" cy="402" r="7" fill="#e5533d"/><circle cx="1640" cy="368" r="7" fill="#f2d16b"/><circle cx="1790" cy="398" r="7" fill="#4f9cff"/>
+  </g>
+  <rect x="0" y="450" width="1920" height="630" fill="url(#floor)"/>
+  <!-- floor boards -->
+  <g stroke="#b7874a" stroke-width="2" opacity=".35">
+    <line x1="0" y1="520" x2="1920" y2="520"/><line x1="0" y1="600" x2="1920" y2="600"/><line x1="0" y1="690" x2="1920" y2="690"/>
+    <line x1="0" y1="790" x2="1920" y2="790"/><line x1="0" y1="900" x2="1920" y2="900"/><line x1="0" y1="1020" x2="1920" y2="1020"/>
+  </g>
+  <!-- court in perspective: far edge y=500, near edge y=1040 -->
+  <g fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round">
+    <polygon points="610,500 1310,500 1880,1040 40,1040"/>
+    <line x1="960" y1="500" x2="960" y2="1040"/>
+    <ellipse cx="960" cy="760" rx="170" ry="80"/>
+    <!-- keys -->
+    <polygon points="860,500 1060,500 1110,640 810,640"/>
+    <polygon points="650,1040 1270,1040 1200,860 720,860"/>
+    <!-- three-point arcs -->
+    <path d="M 700,500 Q 960,780 1220,500"/>
+    <path d="M 330,1040 Q 960,640 1590,1040"/>
+  </g>
+  <!-- far basket -->
+  <rect x="905" y="300" width="110" height="70" rx="4" fill="#f4f6f8" stroke="#8a98ab" stroke-width="4"/>
+  <rect x="945" y="320" width="30" height="24" fill="none" stroke="#e5533d" stroke-width="4"/>
+  <ellipse cx="960" cy="374" rx="22" ry="7" fill="none" stroke="#e5533d" stroke-width="6"/>
+  <path d="M 940,378 L 950,420 L 970,420 L 980,378" fill="none" stroke="#fff" stroke-width="3" opacity=".9"/>
+  <line x1="960" y1="300" x2="960" y2="250" stroke="#8a98ab" stroke-width="8"/>
+  <line x1="960" y1="250" x2="960" y2="200" stroke="#8a98ab" stroke-width="8"/>
+  <!-- players: team red / team blue, sized by depth -->
+  <g>
+    <g transform="translate(880,560) scale(.75)"><circle cx="0" cy="-70" r="22" fill="#e8c39e"/><rect x="-26" y="-50" width="52" height="80" rx="18" fill="#e5533d"/><rect x="-22" y="26" width="18" height="60" rx="8" fill="#222"/><rect x="4" y="26" width="18" height="60" rx="8" fill="#222"/></g>
+    <g transform="translate(1120,620) scale(.85)"><circle cx="0" cy="-70" r="22" fill="#e8c39e"/><rect x="-26" y="-50" width="52" height="80" rx="18" fill="#4f9cff"/><rect x="-22" y="26" width="18" height="60" rx="8" fill="#222"/><rect x="4" y="26" width="18" height="60" rx="8" fill="#222"/></g>
+    <g transform="translate(760,700) scale(1)"><circle cx="0" cy="-70" r="22" fill="#e8c39e"/><rect x="-26" y="-50" width="52" height="80" rx="18" fill="#4f9cff"/><rect x="-22" y="26" width="18" height="60" rx="8" fill="#222"/><rect x="4" y="26" width="18" height="60" rx="8" fill="#222"/></g>
+    <g transform="translate(1000,760) scale(1.1)"><circle cx="0" cy="-70" r="22" fill="#e8c39e"/><rect x="-26" y="-50" width="52" height="80" rx="18" fill="#e5533d"/><rect x="-22" y="26" width="18" height="60" rx="8" fill="#222"/><rect x="4" y="26" width="18" height="60" rx="8" fill="#222"/></g>
+    <g transform="translate(1290,840) scale(1.3)"><circle cx="0" cy="-70" r="22" fill="#e8c39e"/><rect x="-26" y="-50" width="52" height="80" rx="18" fill="#4f9cff"/><rect x="-22" y="26" width="18" height="60" rx="8" fill="#222"/><rect x="4" y="26" width="18" height="60" rx="8" fill="#222"/></g>
+    <g transform="translate(560,900) scale(1.5)"><circle cx="0" cy="-70" r="22" fill="#e8c39e"/><rect x="-26" y="-50" width="52" height="80" rx="18" fill="#e5533d"/><rect x="-22" y="26" width="18" height="60" rx="8" fill="#222"/><rect x="4" y="26" width="18" height="60" rx="8" fill="#222"/></g>
+    <!-- ball -->
+    <circle cx="1040" cy="690" r="16" fill="#d9772f" stroke="#222" stroke-width="2"/>
+  </g>
+</svg>

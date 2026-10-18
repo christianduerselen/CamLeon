@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#57606a"/></marker>
+  </defs>
+  <rect width="960" height="470" fill="#ffffff"/>
+
+  <!-- gimbal -->
+  <rect x="30" y="110" width="250" height="190" rx="12" fill="#fff4e5" stroke="#d9a35c" stroke-width="1.5"/>
+  <text x="155" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="#24292f">XbotGo Chameleon gimbal</text>
+  <text x="50" y="172" fill="#24292f">tracks on its own</text>
+  <text x="50" y="192" fill="#57606a">built-in camera + tracking SDK</text>
+  <text x="50" y="222" fill="#24292f">pan / tilt motors</text>
+  <text x="50" y="252" fill="#24292f">reports angles and battery</text>
+
+  <!-- phone -->
+  <rect x="355" y="60" width="270" height="290" rx="12" fill="#e8f0fe" stroke="#4f9cff" stroke-width="1.5"/>
+  <text x="490" y="90" text-anchor="middle" font-size="16" font-weight="700" fill="#24292f">Phone on the gimbal</text>
+  <text x="490" y="110" text-anchor="middle" fill="#57606a">CamLeon app (Android)</text>
+  <text x="375" y="142" fill="#24292f">camera 720p / 1080p, 30 or 60 fps</text>
+  <text x="375" y="170" fill="#24292f">one H.264 encoder</text>
+  <text x="375" y="190" fill="#57606a">shared by stream and recording</text>
+  <text x="375" y="218" fill="#24292f">control server</text>
+  <text x="375" y="238" fill="#57606a">http://&lt;phone-ip&gt;:8080</text>
+  <text x="375" y="266" fill="#24292f">talks to the gimbal over BLE</text>
+  <text x="375" y="296" fill="#24292f">foreground service:</text>
+  <text x="375" y="316" fill="#57606a">keeps running with the screen locked</text>
+
+  <!-- browser -->
+  <rect x="700" y="110" width="230" height="190" rx="12" fill="#e6f4ea" stroke="#3ecf8e" stroke-width="1.5"/>
+  <text x="815" y="140" text-anchor="middle" font-size="16" font-weight="700" fill="#24292f">Browser</text>
+  <text x="815" y="160" text-anchor="middle" fill="#57606a">phone, tablet or PC</text>
+  <text x="720" y="195" fill="#24292f"><tspan font-family="Consolas, monospace">/</tspan>  control page</text>
+  <text x="720" y="222" fill="#24292f"><tspan font-family="Consolas, monospace">/remote</tspan>  full-screen view</text>
+  <text x="720" y="249" fill="#24292f"><tspan font-family="Consolas, monospace">/recordings</tspan>  files</text>
+  <text x="720" y="280" fill="#57606a">live preview via WebRTC</text>
+
+  <!-- gimbal <-> phone -->
+  <line x1="282" y1="205" x2="353" y2="205" stroke="#57606a" stroke-width="1.5" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="317" y="196" text-anchor="middle" font-size="12" fill="#57606a">BLE</text>
+  <text x="317" y="226" text-anchor="middle" font-size="11" fill="#57606a">mode · start / stop</text>
+  <text x="317" y="240" text-anchor="middle" font-size="11" fill="#57606a">pan / tilt · status</text>
+
+  <!-- phone <-> browser -->
+  <line x1="627" y1="205" x2="698" y2="205" stroke="#57606a" stroke-width="1.5" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="662" y="196" text-anchor="middle" font-size="12" fill="#57606a">same Wi-Fi</text>
+  <text x="662" y="226" text-anchor="middle" font-size="11" fill="#57606a">HTTP + REST API</text>
+  <text x="662" y="240" text-anchor="middle" font-size="11" fill="#57606a">WebRTC preview</text>
+
+  <!-- outputs -->
+  <line x1="430" y1="352" x2="430" y2="398" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="550" y1="352" x2="550" y2="398" stroke="#57606a" stroke-width="1.5" marker-end="url(#a)"/>
+  <rect x="330" y="400" width="200" height="50" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="430" y="421" text-anchor="middle" font-weight="700" fill="#24292f">RTMP stream</text>
+  <text x="430" y="439" text-anchor="middle" font-size="12" fill="#57606a">YouTube, own server, …</text>
+  <rect x="545" y="400" width="200" height="50" rx="10" fill="#f6f8fa" stroke="#8c959f" stroke-width="1.5"/>
+  <text x="645" y="421" text-anchor="middle" font-weight="700" fill="#24292f">MP4 recording</text>
+  <text x="645" y="439" text-anchor="middle" font-size="12" fill="#57606a">Movies/CamLeon on the phone</text>
+</svg>
