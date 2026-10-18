@@ -8,7 +8,9 @@ import android.view.SurfaceView
 import com.pedro.common.ConnectChecker
 import com.pedro.library.base.recording.RecordController
 import com.pedro.library.rtmp.RtmpStream
+import com.pedro.library.util.AndroidMuxerRecordController
 import com.pedro.library.util.sources.audio.MicrophoneSource
+import com.pedro.library.util.sources.audio.NoAudioSource
 import com.pedro.library.util.sources.video.VideoSource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,6 +59,7 @@ class MediaPipeline(
     private var previewView: SurfaceView? = null
     private var settings: CaptureSettings = CaptureSettings()
     private var preparedFor: CaptureSettings? = null
+    private val recordController = VideoOnlyRecordController()
 
     private val connectChecker = object : ConnectChecker {
         override fun onConnectionStarted(url: String) { _stream.value = StreamState.Connecting }
@@ -99,6 +102,7 @@ class MediaPipeline(
                 it.getGlInterface().setCameraOrientation(0)
             }
         } else RtmpStream(context, connectChecker)
+        s.setRecordController(recordController)
         rtmp = s; s
     }
 
@@ -172,11 +176,20 @@ class MediaPipeline(
         return if (sameEncoderConfig(preparedFor, st)) true else reprepareAroundPreview(s, st)
     }
 
-    /** Must be called with preview/stream/record stopped (RootEncoder requirement). */
+    /**
+     * Must be called with preview/stream/record stopped (RootEncoder requirement).
+     * Audio off: RootEncoder starts microphone + audio encoder on every stream/record start no matter
+     * whether prepareAudio was called (with the last config) — skipping it still recorded sound.
+     * So swap in [NoAudioSource] (microphone not opened) and mark stream and file as video-only.
+     */
     private fun prepare(s: RtmpStream, st: CaptureSettings): Boolean = try {
         val q = st.quality
         val videoOk = s.prepareVideo(q.width, q.height, q.bitrateBps, q.fps)
-        val audioOk = if (st.audioEnabled) s.prepareAudio(44_100, true, 128_000) else true
+        val audio = st.audioEnabled
+        if (audio != (s.audioSource !is NoAudioSource)) s.changeAudioSource(if (audio) MicrophoneSource() else NoAudioSource())
+        s.getStreamClient().setOnlyVideo(!audio)
+        recordController.videoOnly = !audio
+        val audioOk = s.prepareAudio(44_100, true, 128_000)      // also when off: the encoder is prepared on every start
         if (videoOk && audioOk) { preparedFor = st; true }
         else { preparedFor = null; fail("encoder prepare failed (video=$videoOk audio=$audioOk)"); false }
     } catch (t: Throwable) { preparedFor = null; fail("prepare failed: ${t.message}"); false }
@@ -326,6 +339,13 @@ class MediaPipeline(
         }
         rtmp = null; preparedFor = null
         _stream.value = StreamState.Off; _recording.value = false; _previewing.value = false
+    }
+
+    /** RootEncoder never tells its muxer "video only" → without it the MP4 waits for an audio track forever. */
+    private class VideoOnlyRecordController : AndroidMuxerRecordController() {
+        @Volatile var videoOnly = false
+        override fun setVideoFormat(videoFormat: android.media.MediaFormat, isOnlyVideo: Boolean) =
+            super.setVideoFormat(videoFormat, isOnlyVideo || videoOnly)
     }
 
     private companion object { const val TAG = "MediaPipeline"; const val RECORD_FOLDER = "CamLeon" }
