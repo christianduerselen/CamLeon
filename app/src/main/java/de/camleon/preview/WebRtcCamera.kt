@@ -69,6 +69,7 @@ class WebRtcCamera(private val context: Context) {
     private var track: VideoTrack? = null
     private val peers = ConcurrentHashMap<String, PeerConnection>()
     private var outRenderer: EglRenderer? = null
+    private var landscapeLock: LandscapeLock? = null
     @Volatile var started = false; private set
     @Volatile private var deviceName: String? = null
     /** True after the camera was taken away (error / disconnect / freeze) until frames flow again. */
@@ -143,7 +144,7 @@ class WebRtcCamera(private val context: Context) {
             val cap: CameraVideoCapturer = FpsCamera2Capturer(context, name, cameraEvents)
             val h = SurfaceTextureHelper.create("CamCapture", eglBase.eglBaseContext)
             val src = factory.createVideoSource(cap.isScreencast)
-            cap.initialize(h, context, LandscapeLock(src.capturerObserver))
+            cap.initialize(h, context, LandscapeLock(src.capturerObserver).also { landscapeLock = it })
             cap.startCapture(width, height, fps)
             track = factory.createVideoTrack("cam0", src).also { it.setEnabled(true) }
             helper = h; capturer = cap; source = src
@@ -157,7 +158,12 @@ class WebRtcCamera(private val context: Context) {
 
     // ---- output surface (RootEncoder input) --------------------------------------------------
 
-    /** Render every captured frame into [surface] of the given size (used by [WebRtcVideoSource]). */
+    /**
+     * Render every captured frame into [surface] of the given size (used by [WebRtcVideoSource]).
+     * Tapped at the capturer, not as a track sink: the track's frames pass libwebrtc's adapter, which
+     * follows the browser viewers' wishes (30 fps preview cap) — a 1080p60 recording then got 30 fps
+     * as soon as someone watched.
+     */
     @Synchronized
     fun attachOutput(surface: Surface, w: Int, h: Int) {
         detachOutput()
@@ -165,7 +171,7 @@ class WebRtcCamera(private val context: Context) {
         r.init(eglBase.eglBaseContext, EglBase.CONFIG_PLAIN, GlRectDrawer())
         r.setLayoutAspectRatio(w.toFloat() / h.toFloat())
         r.createEglSurface(surface)
-        track?.addSink(r)
+        landscapeLock?.tap = r
         outRenderer = r
         Log.i(TAG, "output attached ${w}x$h")
     }
@@ -173,7 +179,7 @@ class WebRtcCamera(private val context: Context) {
     @Synchronized
     fun detachOutput() {
         outRenderer?.let { r ->
-            track?.removeSink(r)
+            landscapeLock?.tap = null
             val done = CountDownLatch(1)
             r.releaseEglSurface { done.countDown() }
             done.await(500, TimeUnit.MILLISECONDS)
@@ -339,7 +345,7 @@ class WebRtcCamera(private val context: Context) {
         detachOutput()
         runCatching { capturer?.stopCapture() }
         capturer?.dispose(); source?.dispose(); helper?.dispose()
-        track = null; capturer = null; source = null; helper = null
+        track = null; capturer = null; source = null; helper = null; landscapeLock = null
         started = false
     }
 
@@ -391,16 +397,19 @@ class WebRtcCamera(private val context: Context) {
  * current DISPLAY rotation; while the screen is locked the display reports portrait, frames get tagged
  * 90°/270° and the browser preview turns 9:16. This observer keeps frames in landscape: portrait tags
  * are replaced by the last landscape rotation seen (0° by default = landscape with the camera on the
- * left, the usual mount).
+ * left, the usual mount). [tap] gets every frame first, before libwebrtc's adapter (RootEncoder output).
  */
 private class LandscapeLock(private val downstream: org.webrtc.CapturerObserver) : org.webrtc.CapturerObserver {
     @Volatile private var lastLandscape = 0
+    @Volatile var tap: org.webrtc.VideoSink? = null
     override fun onCapturerStarted(success: Boolean) = downstream.onCapturerStarted(success)
     override fun onCapturerStopped() = downstream.onCapturerStopped()
     override fun onFrameCaptured(frame: org.webrtc.VideoFrame) {
         val r = frame.rotation
-        if (r == 0 || r == 180) { lastLandscape = r; downstream.onFrameCaptured(frame); return }
-        val fixed = org.webrtc.VideoFrame(frame.buffer, lastLandscape, frame.timestampNs)
-        downstream.onFrameCaptured(fixed)   // the buffer stays owned by the original frame (no extra retain/release)
+        if (r == 0 || r == 180) lastLandscape = r
+        val out = if (r == 0 || r == 180) frame
+            else org.webrtc.VideoFrame(frame.buffer, lastLandscape, frame.timestampNs)   // buffer stays owned by the original frame (no extra retain/release)
+        tap?.onFrame(out)   // EglRenderer retains the buffer itself while it renders
+        downstream.onFrameCaptured(out)
     }
 }
