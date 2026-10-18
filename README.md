@@ -12,6 +12,9 @@ streaming and local recording, plus a browser control page with live preview in 
 - Streaming/recording: RootEncoder (H.264/AAC), one encoder shared by stream and recording.
   Preview to the browser: WebRTC, capped at 540p / 30 fps / 1.5 Mbps per viewer (each open browser
   tab adds its own encoder on the phone).
+- Qualities: 720p30, 1080p30 and 1080p60. 1080p60 is only offered when the camera supports 60 fps
+  at 1080p for apps (e.g. moto g51 5G: yes; Galaxy S22 Ultra: no). At 60 fps the exposure time is
+  at most 1/60 s, so in dim light the picture gets darker or noisier than at 30 fps.
 
 ## Background operation and quitting
 
@@ -138,3 +141,6 @@ when power is connected and does not drop back right after unplugging
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+`app/src/main/java/org/webrtc/FpsCamera2Session.java` is a modified copy of WebRTC's
+`Camera2Session` (BSD-3-Clause, © The WebRTC project authors; original header kept).

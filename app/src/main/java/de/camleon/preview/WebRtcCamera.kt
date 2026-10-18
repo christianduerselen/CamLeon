@@ -1,6 +1,8 @@
 package de.camleon.preview
 
 import android.content.Context
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.util.Log
 import android.view.Surface
 import org.webrtc.Camera2Enumerator
@@ -10,6 +12,7 @@ import org.webrtc.DefaultVideoDecoderFactory
 import org.webrtc.DefaultVideoEncoderFactory
 import org.webrtc.EglBase
 import org.webrtc.EglRenderer
+import org.webrtc.FpsCamera2Capturer
 import org.webrtc.GlRectDrawer
 import org.webrtc.IceCandidate
 import org.webrtc.MediaConstraints
@@ -96,18 +99,27 @@ class WebRtcCamera(private val context: Context) {
     fun recoverIfLost() { if (lost) { main.removeCallbacks(recoverRunnable); main.post(recoverRunnable) } }
 
     /**
-     * Highest frame rate the camera offers for [w]x[h] through the public Camera2 API (0 = unknown).
+     * Highest frame rate the camera offers for [w]x[h] through the public Camera2 API (0 = unknown):
+     * the size's minimum frame duration, capped by the highest auto-exposure target range — both must
+     * allow it, otherwise the capture runs slower than requested.
      * Example: a Galaxy S22 Ultra reports at most 30 fps for every normal mode; 60 fps simply does not
      * exist for third-party apps there (only 120/240 high-speed modes), so a "60 fps" quality streams at 30.
      */
     fun maxFpsFor(w: Int, h: Int): Int = runCatching {
         val name = deviceName ?: Camera2Enumerator(context).let { e -> e.deviceNames.firstOrNull { e.isBackFacing(it) } ?: e.deviceNames.firstOrNull() } ?: return 0
         val formats = Camera2Enumerator(context).getSupportedFormats(name) ?: return 0
-        (formats.filter { it.width == w && it.height == h }.ifEmpty { formats }).maxOfOrNull { it.framerate.max } ?: 0
+        val bySize = (formats.filter { it.width == w && it.height == h }.ifEmpty { formats }).maxOfOrNull { it.framerate.max } ?: 0
+        val aeMax = (context.getSystemService(Context.CAMERA_SERVICE) as CameraManager).getCameraCharacteristics(name)
+            .get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)?.maxOfOrNull { it.upper } ?: 0
+        val aeMaxMilli = if (aeMax in 1 until 1000) aeMax * 1000 else aeMax          // some HALs report ×1000
+        if (aeMaxMilli > 0) minOf(bySize, aeMaxMilli) else bySize
     }.getOrDefault(0) / 1000
 
-    /** Frame rate the camera really delivers for the current format (requested fps capped by the device). */
-    fun effectiveFps(): Int { val m = maxFpsFor(width, height); return if (m in 1 until fps) m else fps }
+    /** Frame rate the camera really runs at (upper bound of the AE range in use; device cap before the first start). */
+    fun effectiveFps(): Int {
+        if (started) FpsCamera2Capturer.activeMaxFps().takeIf { it > 0 }?.let { return it }
+        val m = maxFpsFor(width, height); return if (m in 1 until fps) m else fps
+    }
     @Volatile var lastError: String? = null; private set
 
     @Synchronized
@@ -127,7 +139,8 @@ class WebRtcCamera(private val context: Context) {
             val name = enumerator.deviceNames.firstOrNull { enumerator.isBackFacing(it) }
                 ?: enumerator.deviceNames.firstOrNull() ?: error("no camera")
             deviceName = name
-            val cap: CameraVideoCapturer = enumerator.createCapturer(name, cameraEvents) ?: error("capturer unavailable")
+            // Own capturer: libwebrtc's range choice turns a 60 fps request into [10,30] on some phones.
+            val cap: CameraVideoCapturer = FpsCamera2Capturer(context, name, cameraEvents)
             val h = SurfaceTextureHelper.create("CamCapture", eglBase.eglBaseContext)
             val src = factory.createVideoSource(cap.isScreencast)
             cap.initialize(h, context, LandscapeLock(src.capturerObserver))
