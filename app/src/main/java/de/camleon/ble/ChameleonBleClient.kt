@@ -10,6 +10,7 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
@@ -77,13 +78,14 @@ class ChameleonBleClient(private val context: Context) {
         }
     }
 
-    fun startScan(durationMs: Long = 12_000) {
+    /** [filters] null = unfiltered (needs the screen on, Android postpones unfiltered scans in screen-off). */
+    fun startScan(durationMs: Long = 12_000, filters: List<ScanFilter>? = null) {
         val a = adapter ?: run { _state.value = ConnState.OFF; return }
         if (!a.isEnabled) { _state.value = ConnState.OFF; ProtocolLog.event("bluetooth is off"); return }
         if (scanning) return
         _found.value = emptyList()
         val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
-        a.bluetoothLeScanner.startScan(null, settings, scanCb)
+        a.bluetoothLeScanner.startScan(filters, settings, scanCb)
         scanning = true
         if (gatt == null) _state.value = ConnState.SCANNING
         ProtocolLog.event("scan started")

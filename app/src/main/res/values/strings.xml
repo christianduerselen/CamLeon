@@ -99,11 +99,15 @@
     <string name="video_section">Video (stream + recording)</string>
     <string name="audio">Audio</string>
     <string name="preview_chip">Browser preview: %1$s</string>
-    <string name="display_section">Phone display</string>
+    <string name="phone_section">Phone</string>
+    <string name="display_label">Display</string>
     <string name="scr_on">keep on</string>
     <string name="scr_dim">dim (tap to wake)</string>
     <string name="scr_timeout">system timeout</string>
     <string name="display_hint">Camera, stream and gimbal keep running with the screen dark or off (foreground service).</string>
+    <string name="keep_background">Keep running in background</string>
+    <string name="keep_background_off_hint">Swiping CamLeon away from the recent apps ends it (a running recording is saved first).</string>
+    <string name="keep_background_on_hint">Only Quit ends CamLeon; swiping it away from the recent apps keeps everything running.</string>
 
     <!-- status messages produced by the session (English keys, translated here) -->
     <string name="msg_preparing">preparing gimbal…</string>
@@ -117,6 +121,7 @@
     <string name="phase_idle">idle</string>
     <string name="phase_bt_off">bluetooth off</string>
     <string name="phase_searching">searching for gimbal</string>
+    <string name="phase_screen_off">screen off — turn it on to search for the gimbal</string>
     <string name="phase_paused">disconnected by user (auto-connect paused)</string>
     <string name="phase_connecting_to">connecting to %1$s</string>
     <string name="phase_waiting">waiting %1$s</string>

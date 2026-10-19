@@ -99,32 +99,14 @@
   </div>
 </div>
 
+<script src="/i18n.js"></script>
 <script src="/control.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const { api, post } = CamLeon;
-const EN = {
-  startPreview: 'Start preview', speed: 'Speed',
-  tracking: 'Tracking', off: 'off', starting: 'starting…', running: 'running', noGimbal: 'no gimbal', noUrl: 'no URL',
-  stream: 'Stream', connecting: 'connecting…', live: 'live', error: 'error', rec: 'REC',
-  confirmRecOff: 'Stop the recording?', confirmStreamOff: 'Stop the stream?',
-  pv_connecting: 'Preview connecting…', pv_connected: '', pv_failed: 'Preview failed',
-  pv_nopath_title: 'No media path.', pv_nopath_text: 'Phone and browser must be on the same Wi-Fi (no guest network / client isolation).',
-  pv_blocked: 'The browser stopped playback.', gimbal: 'Gimbal', phone: 'Phone', hot: 'hot',
-};
-const DE = {
-  startPreview: 'Vorschau starten', speed: 'Tempo',
-  tracking: 'Tracking', off: 'aus', starting: 'startet…', running: 'läuft', noGimbal: 'kein Gimbal', noUrl: 'keine URL',
-  stream: 'Stream', connecting: 'verbindet…', live: 'live', error: 'Fehler', rec: 'REC',
-  confirmRecOff: 'Aufnahme beenden?', confirmStreamOff: 'Stream beenden?',
-  pv_connecting: 'Vorschau verbindet…', pv_connected: '', pv_failed: 'Vorschau fehlgeschlagen',
-  pv_nopath_title: 'Kein Videoweg.', pv_nopath_text: 'Handy und Browser müssen im selben WLAN sein (kein Gast-WLAN, keine Client-Isolation).',
-  pv_blocked: 'Der Browser hat die Wiedergabe gestoppt.', gimbal: 'Gimbal', phone: 'Handy', hot: 'heiß',
-};
-let lang = (() => { try { return localStorage.getItem('lang'); } catch (e) { return null; } })() || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en');
-const t = k => (lang === 'de' && DE[k]) || EN[k] || k;
-document.documentElement.lang = lang;
-document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+// i18n: shared table in /i18n.js (keys r_* are specific to this page)
+const { t } = CamLeonI18N;
+CamLeonI18N.apply(document);
 
 // speed is remembered per browser
 try { const v = localStorage.getItem('speed'); if (v) { $('spd').value = v; $('spdV').textContent = v; } } catch (e) {}
@@ -156,7 +138,7 @@ async function refresh() {
     $('swTrack').disabled = !ready && !trk.on;
     // stream: needs an RTMP URL (set on the main page)
     const hasUrl = !!(cfg.rtmpUrl && cfg.rtmpUrl.length);
-    if (st.state === 'live') pill($('swStream'), t('stream') + ' · ' + t('live'), 'on');
+    if (st.state === 'live') pill($('swStream'), t('stream') + ' · ' + t('r_live'), 'on');
     else if (st.state === 'connecting') pill($('swStream'), t('stream') + ' · ' + t('connecting'), 'warn');
     else if (st.state === 'error') pill($('swStream'), t('stream') + ' · ' + t('error'), 'err');
     else pill($('swStream'), t('stream') + ' · ' + (hasUrl ? t('off') : t('noUrl')), 'off');
@@ -176,13 +158,13 @@ const pad = CamLeon.pad({ buttons: document.querySelectorAll('.pad button[data-y
 function showMid(html, withStart) { $('pvmsg').innerHTML = html; $('pvmsg').style.display = html ? '' : 'none'; $('pvstart').style.display = withStart ? '' : 'none'; $('mid').style.display = (html || withStart) ? '' : 'none'; }
 const preview = CamLeon.preview({
   video: $('pv'),
-  onState: s => { pill($('pPv'), t('pv_' + s) || s, 'off', s !== 'connected'); if (s === 'connecting') showMid('', false); },
+  onState: s => { pill($('pPv'), t(s === 'connecting' ? 'r_pv_connecting' : 'pv_' + s), 'off', s !== 'connected'); if (s === 'connecting') showMid('', false); },
   onStarted: () => {},
   onStopped: () => pill($('pPv'), '', 'off', false),
   onFailed: (kind, detail) => {
-    if (kind === 'nopath') showMid('<b>' + t('pv_nopath_title') + '</b> ' + t('pv_nopath_text'), true);
-    else if (kind === 'failed') showMid('<b>' + t('pv_failed') + '</b> ' + detail, true);
-    else showMid(t('pv_blocked'), true);
+    if (kind === 'nopath') showMid('<b>' + t('r_pv_nopath_title') + '</b> ' + t('r_pv_nopath_text'), true);
+    else if (kind === 'failed') showMid('<b>' + t('r_pv_failed') + '</b> ' + detail, true);
+    else showMid(t('r_pv_blocked'), true);
   },
 });
 

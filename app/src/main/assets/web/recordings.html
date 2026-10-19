@@ -21,7 +21,7 @@
   .mut { color:var(--mut); font-size:13px; }
   button, a.btn { padding:7px 12px; border:0; border-radius:8px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; color:#fff; background:#2c323c; text-decoration:none; display:inline-block; touch-action:manipulation; }
   .start { background:var(--acc); } .stop { background:var(--err); }
-  #langBtn { margin-left:auto; padding:6px 10px; font-size:12px; }
+  #langSel { margin-left:auto; padding:5px 8px; font-size:12px; width:auto; }
   .pill { display:inline-block; padding:1px 9px; border-radius:999px; font-size:12px; font-weight:600; background:#2c323c; color:var(--mut); }
   .pill.rec { background:var(--rec); color:#fff; } .pill.bad { background:#5a3a1a; color:#ffc58a; }
   .item { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 0; border-top:1px solid #262b34; }
@@ -34,59 +34,35 @@
 </head>
 <body>
 <div class="wrap">
-  <h1><a href="/" data-i18n="back">← Control</a><span data-i18n="title">Recordings</span><button id="langBtn" onclick="toggleLang()">DE</button></h1>
+  <h1><a href="/" data-i18n="rec_back">← Control</a><span data-i18n="rec_title">Recordings</span><select id="langSel"></select></h1>
 
   <div class="card" id="player" style="display:none">
     <div class="row" style="justify-content:space-between">
       <b id="playName" style="overflow-wrap:anywhere"></b>
-      <button onclick="closePlayer()" data-i18n="close">Close</button>
+      <button onclick="closePlayer()" data-i18n="rec_close">Close</button>
     </div>
     <video id="video" controls playsinline preload="metadata"></video>
   </div>
 
   <div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:12px">
-      <div class="ctitle" data-i18n="files">Files</div>
+      <div class="ctitle" data-i18n="rec_files">Files</div>
       <span id="summary" class="mut"></span>
     </div>
     <div id="list"><span class="mut">…</span></div>
     <div id="err"></div>
   </div>
-  <div class="mut" data-i18n="hint">Play streams the video into the browser; Download saves the file. Files are in Movies/CamLeon on the phone.</div>
+  <div class="mut" data-i18n="rec_hint">Play streams the video into the browser; Download saves the file. Files are in Movies/CamLeon on the phone.</div>
 </div>
 
+<script src="/i18n.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const I18N = {
-  en: {},
-  de: {
-    back: '← Steuerung', title: 'Aufnahmen', close: 'Schließen', files: 'Dateien', play: 'Abspielen', download: 'Download', del: 'Löschen',
-    recordingNow: 'nimmt gerade auf', incomplete: 'unvollständig', none: 'Noch keine Aufnahmen.',
-    total: 'gesamt', free: 'frei', confirmDel: 'Wirklich löschen?', phoneOnly: 'nur am Handy löschbar',
-    incompleteHint: 'Aufnahme wurde nicht sauber beendet — die meisten Player spielen sie nicht ab.',
-    phoneOnlyHint: 'Vor einer Neuinstallation aufgenommen: Android erlaubt das Löschen nur am Handy (Galerie / Eigene Dateien).',
-    hint: 'Abspielen streamt das Video in den Browser, Download speichert die Datei. Auf dem Handy liegen die Dateien in Movies/CamLeon.',
-    errDel: 'Löschen fehlgeschlagen:',
-  }
-};
-const EN = {
-  play: 'Play', download: 'Download', del: 'Delete', recordingNow: 'recording now', incomplete: 'incomplete', none: 'No recordings yet.',
-  total: 'total', free: 'free', confirmDel: 'Delete this file?', phoneOnly: 'delete on the phone only',
-  incompleteHint: 'The recording was not finished properly — most players will not play it.',
-  phoneOnlyHint: 'Recorded before a reinstall: Android allows deleting it on the phone only (Gallery / Files).',
-  errDel: 'Delete failed:',
-};
-let lang = (() => { try { return localStorage.getItem('lang'); } catch (e) { return null; } })() || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en');
-const t = k => (lang === 'de' && I18N.de[k]) || EN[k] || k;
-function applyLang() {
-  document.documentElement.lang = lang;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    if (!el.dataset.en) el.dataset.en = el.textContent;
-    el.textContent = lang === 'de' ? (I18N.de[el.dataset.i18n] || el.dataset.en) : el.dataset.en;
-  });
-  $('langBtn').textContent = lang === 'de' ? 'EN' : 'DE';
-}
-function toggleLang() { lang = lang === 'de' ? 'en' : 'de'; try { localStorage.setItem('lang', lang); } catch (e) {} applyLang(); render(); }
+// i18n: shared table in /i18n.js (keys rec_* are specific to this page)
+const { t } = CamLeonI18N;
+let lang = CamLeonI18N.lang;
+function applyLang() { lang = CamLeonI18N.lang; CamLeonI18N.apply(document); }
+CamLeonI18N.mount($('langSel'), () => { applyLang(); render(); });
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function size(b) {
@@ -100,7 +76,7 @@ function dur(ms) {
   const s = Math.round(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), r = s % 60;
   return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(r).padStart(2, '0');
 }
-const when = ms => new Date(ms).toLocaleString(lang === 'de' ? 'de-DE' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const when = ms => new Date(ms).toLocaleString(CamLeonI18N.locale(), { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 const fileUrl = (n, dl) => '/api/recordings/file?name=' + encodeURIComponent(n) + (dl ? '&download=1' : '');
 
 let data = null, phone = null;
@@ -121,9 +97,9 @@ async function load() {
 function render() {
   if (!data) return;
   const list = data.recordings;
-  $('summary').textContent = list.length + ' · ' + size(data.totalBytes) + ' ' + t('total') +
+  $('summary').textContent = list.length + ' · ' + size(data.totalBytes) + ' ' + t('rec_total') +
     (phone && phone.storageFreeBytes != null ? ' · ' + size(phone.storageFreeBytes) + ' ' + t('free') : '');
-  if (!list.length) { $('list').innerHTML = '<span class="mut">' + t('none') + '</span>'; return; }
+  if (!list.length) { $('list').innerHTML = '<span class="mut">' + t('rec_none') + '</span>'; return; }
   $('list').innerHTML = list.map((f, i) => {
     const info = [when(f.modified), dur(f.durationMs), size(f.size)].filter(Boolean).join(' · ');
     const badge = f.recording ? ' <span class="pill rec">● ' + t('recordingNow') + '</span>'

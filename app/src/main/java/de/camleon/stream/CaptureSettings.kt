@@ -26,6 +26,10 @@ data class CaptureSettings(
     // --- Phone display while capturing (24/7 use: the foreground service keeps camera/stream alive
     //     with the screen off, so the display can be dimmed or allowed to time out)
     val screenMode: ScreenMode = ScreenMode.ON,
+    // --- Background: false (default) = swiping CamLeon away from the recent apps ends it like any app
+    //     (orderly: recording finished, stream stopped, gimbal disconnected); true = only Quit ends it.
+    //     The foreground service runs either way — it is what keeps the camera through a screen lock.
+    val keepInBackground: Boolean = false,
 ) {
     enum class ScreenMode(val label: String) {
         ON("keep screen on"),
@@ -59,6 +63,7 @@ data class CaptureSettings(
         put("audioEnabled", audioEnabled)
         put("previewQuality", previewQuality.name)
         put("screenMode", screenMode.name)
+        put("keepInBackground", keepInBackground)
         put("tracking", tracking.toJson())
     }
 
@@ -72,6 +77,7 @@ data class CaptureSettings(
         audioEnabled = (p["audio"] ?: p["audioEnabled"])?.toBooleanStrictOrNull() ?: audioEnabled,
         previewQuality = p["previewQuality"]?.let { q -> PreviewQuality.entries.firstOrNull { it.name.equals(q, true) } } ?: previewQuality,
         screenMode = p["screenMode"]?.let { m -> ScreenMode.entries.firstOrNull { it.name.equals(m, true) } } ?: screenMode,
+        keepInBackground = p["keepInBackground"]?.toBooleanStrictOrNull() ?: keepInBackground,
         tracking = tracking.applyParams(p),
     )
 
@@ -88,6 +94,7 @@ data class CaptureSettings(
             audioEnabled = o.optBoolean("audioEnabled", true),
             previewQuality = runCatching { PreviewQuality.valueOf(o.optString("previewQuality", PreviewQuality.P540.name)) }.getOrDefault(PreviewQuality.P540),
             screenMode = runCatching { ScreenMode.valueOf(o.optString("screenMode", ScreenMode.ON.name)) }.getOrDefault(ScreenMode.ON),
+            keepInBackground = o.optBoolean("keepInBackground", false),
             tracking = o.optJSONObject("tracking")?.let { TrackingSettings.fromJson(it) } ?: TrackingSettings(),
         )
 

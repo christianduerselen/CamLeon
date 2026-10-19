@@ -199,6 +199,7 @@ fun statusText(msg: String?): String? {
         msg == "idle" -> stringResource(R.string.phase_idle)
         msg == "bluetooth off" -> stringResource(R.string.phase_bt_off)
         msg == "searching for gimbal" -> stringResource(R.string.phase_searching)
+        msg.startsWith("screen off") -> stringResource(R.string.phase_screen_off)
         msg.startsWith("disconnected by user") -> stringResource(R.string.phase_paused)
         msg.startsWith("connecting to ") -> stringResource(R.string.phase_connecting_to, msg.removePrefix("connecting to "))
         msg.startsWith("waiting (") -> stringResource(R.string.phase_waiting, msg.removePrefix("waiting "))
@@ -520,8 +521,9 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
             Text(stringResource(R.string.files_hint), style = MaterialTheme.typography.bodySmall, color = dim)
             HorizontalDivider()
 
-            // ---------------- Phone display (never locked) ----------------
-            Header(stringResource(R.string.display_section), false, "")
+            // ---------------- Phone: display + background (never locked) ----------------
+            Header(stringResource(R.string.phone_section), false, "")
+            Text(stringResource(R.string.display_label), style = MaterialTheme.typography.bodySmall, color = dim)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 CaptureSettings.ScreenMode.entries.forEach { m ->
                     FilterChip(selected = s.screenMode == m, onClick = { onChange(s.copy(screenMode = m)) },
@@ -529,6 +531,9 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
                 }
             }
             Text(stringResource(R.string.display_hint), style = MaterialTheme.typography.bodySmall, color = dim)
+            ToggleRow(stringResource(R.string.keep_background), s.keepInBackground) { onChange(s.copy(keepInBackground = it)) }
+            Text(stringResource(if (s.keepInBackground) R.string.keep_background_on_hint else R.string.keep_background_off_hint),
+                style = MaterialTheme.typography.bodySmall, color = dim)
             HorizontalDivider()
             Text("CamLeon " + de.camleon.BuildConfig.VERSION_NAME + if (de.camleon.BuildConfig.DEBUG) " · debug" else "",
                 style = MaterialTheme.typography.labelSmall, color = dim)

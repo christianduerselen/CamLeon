@@ -1,6 +1,8 @@
 package de.camleon.ble
 
+import android.bluetooth.le.ScanFilter
 import android.content.Context
+import android.os.PowerManager
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +30,7 @@ class GimbalLink(context: Context, private val ble: ChameleonBleClient) {
     data class Remembered(val address: String, val name: String?)
 
     private val prefs = context.applicationContext.getSharedPreferences("gimbal_link", Context.MODE_PRIVATE)
+    private val power = context.applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var loop: Job? = null
 
@@ -77,6 +80,9 @@ class GimbalLink(context: Context, private val ble: ChameleonBleClient) {
                     _phase.value = when {
                         ble.state.value == ChameleonBleClient.ConnState.READY -> "ready"
                         ble.state.value == ChameleonBleClient.ConnState.OFF -> "bluetooth off"
+                        // paused / auto-connect off without a remembered gimbal: the manual scan the user needs
+                        // next is refused by Android while the screen is off, so say that instead
+                        _remembered.value == null && !power.isInteractive -> "screen off — turn it on to search for the gimbal"
                         paused -> "disconnected by user (auto-connect paused)"
                         else -> "idle"
                     }
@@ -106,9 +112,15 @@ class GimbalLink(context: Context, private val ble: ChameleonBleClient) {
             if (awaitReady(12_000)) return true
             ble.disconnect()
         }
-        // 2) scan and pick
+        // 2) scan and pick. Android silently postpones an UNFILTERED scan while the screen is off
+        //    ("Cannot start unfiltered scan in screen-off"): with a remembered gimbal scan filtered by its
+        //    address instead (allowed in screen-off), without one the user has to turn the screen on.
+        if (rem == null && !power.isInteractive) {
+            _phase.value = "screen off — turn it on to search for the gimbal"
+            while (!power.isInteractive) { if (paused || !_autoConnect.value) return false; delay(1_000) }   // scan right away once it is on
+        }
         _phase.value = "searching for gimbal"
-        ble.startScan(8_000)
+        ble.startScan(8_000, if (power.isInteractive || rem == null) null else listOf(ScanFilter.Builder().setDeviceAddress(rem.address).build()))
         val target = withTimeoutOrNull(8_500) {
             while (true) {
                 val found = ble.found.value

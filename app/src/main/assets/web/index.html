@@ -54,7 +54,7 @@
   button:disabled { opacity:.4; cursor:default; }
   .ops { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:12px; }
   .padwrap { display:flex; flex-direction:column; align-items:center; gap:8px; }
-  #langBtn { float:right; font-size:12px; padding:6px 10px; }
+  #langSel { float:right; font-size:12px; padding:5px 8px; width:auto; margin:0; }
   .chk { display:flex; align-items:center; gap:8px; margin:8px 0; font-size:14px; } .chk input { width:18px; height:18px; }
   table { width:100%; border-collapse:collapse; font-size:13px; } td { padding:6px 4px; border-top:1px solid #262b34; vertical-align:top; }
   pre { margin:0; font:12px/1.4 ui-monospace,monospace; white-space:pre-wrap; word-break:break-all; max-height:300px; overflow:auto; background:#0e1116; border-radius:8px; padding:10px; }
@@ -76,7 +76,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1><img src="/favicon.svg" alt="" style="width:30px;height:30px;vertical-align:-7px;margin-right:9px;border-radius:7px">CamLeon <span id="err" class="mut" style="color:var(--err);font-weight:400;font-size:13px"></span><button class="sm" id="langBtn" onclick="toggleLang()">DE</button></h1>
+  <h1><img src="/favicon.svg" alt="" style="width:30px;height:30px;vertical-align:-7px;margin-right:9px;border-radius:7px">CamLeon <span id="err" class="mut" style="color:var(--err);font-weight:400;font-size:13px"></span><select id="langSel"></select></h1>
 
   <!-- 1. Gimbal link -->
   <div class="card" id="linkcard">
@@ -199,13 +199,16 @@
         <div class="chk"><input type="checkbox" id="recAuto" onchange="setSetting({recordAutoStart:this.checked})"><span data-i18n="recAuto">Start recording automatically at app start</span></div>
         <div class="mut" data-i18n="filesHint">Files: public Movies/CamLeon (Gallery, Files app, USB)</div>
 
-        <h2 style="margin-top:16px" data-i18n="display">Phone display</h2>
+        <h2 style="margin-top:16px" data-i18n="phone">Phone</h2>
+        <label data-i18n="display">Display</label>
         <select id="screenMode" onchange="setSetting({screenMode:this.value})">
           <option value="ON" data-i18n="scrOn">keep screen on</option>
           <option value="DIM" data-i18n="scrDim">dim: black screen (tap on the phone wakes it)</option>
           <option value="TIMEOUT" data-i18n="scrTimeout">system timeout: screen turns off by itself</option>
         </select>
         <div class="mut" style="margin:4px 0" data-i18n="displayHint">Camera, stream and gimbal keep running with the phone screen dark or off.</div>
+        <div class="chk"><input type="checkbox" id="keepBg" onchange="setSetting({keepInBackground:this.checked})"><span data-i18n="keepBg">Keep running in background</span></div>
+        <div class="mut" style="margin:4px 0" id="keepBgHint"></div>
 
 
       </div>
@@ -246,89 +249,17 @@
 
 <div id="ver" class="mut" style="text-align:center;margin:4px 0 24px;font-size:12px"></div>
 
+<script src="/i18n.js"></script>
 <script src="/control.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const fmt = v => (v == null ? '—' : Number(v).toFixed(1));
 
-// ---- i18n: static texts via data-i18n, dynamic ones via t(); server messages via tr() ----
-const I18N = {
-  en: {
-    gimbal: 'Gimbal', last: 'last', lastUsed: 'last used', noRemembered: 'no gimbal remembered', connect: 'Connect', noName: '(no name)',
-    sdkRunning: 'gimbal SDK running', starting: 'starting…', idle: 'idle', connectFirst: 'connect the gimbal first',
-    liveAt: 'live', connecting: 'connecting…', error: 'error', setUrl: 'enter an RTMP URL below', recordingTo: 'recording →', savesTo: 'saves to Movies/CamLeon (Gallery)',
-    fromSdk: '(from the tracking SDK)', notConnected: 'not connected', driving: 'driving to 0°…', lockedWhile: 'locked while', trackingRuns: 'tracking runs',
-    cameraMax: 'At this resolution the camera delivers at most', fpsStreaming: 'fps → stream', cameraCapture: 'Camera capture',
-    battery: 'Battery', onPower: 'on power', onBattery: 'on battery', temp: 'Temperature', free: 'free', recLeft: 'recording',
-    th_none: 'normal', th_light: 'slightly raised', th_moderate: 'raised', th_severe: 'high — phone throttles', th_critical: 'critical', th_emergency: 'critical', th_shutdown: 'critical — shutting down', th_unknown: '—',
-    sp_BASKETBALL: 'Basketball', sp_SOCCER: 'Soccer', sp_HANDBALL: 'Handball', sp_ICE_HOCKEY: 'Ice hockey', sp_LACROSSE: 'Lacrosse',
-    sp_AMERICAN_FOOTBALL: 'American football', sp_VOLLEYBALL: 'Volleyball',
-    var_full_high: 'Full court · raised camera', var_full_low: 'Full court · low camera', var_half_high: 'Half court · raised camera',
-    var_half_low: 'Half court · low camera', var_full: 'Full field', var_half: 'Half field', ageAdult: '14 years and older', ageYouth: 'Under 14',
-    pv_new: 'starting…', pv_connecting: 'connecting…', pv_connected: 'live', pv_disconnected: 'interrupted', pv_failed: 'failed', pv_closed: 'closed',
-    pv_nopath: 'no video path', pv_nopath_title: 'No video path.',
-    pv_nopath_text: 'The browser cannot reach the phone directly. Browser and phone must be in the same network.',
-    pv_failed: 'Preview failed:', pv_blocked: 'The browser stopped playback — tap Start preview.',
-  },
-  de: {
-    sport: 'Sportart', variant: 'Feld / Kamera', age: 'Altersgruppe',
-    sp_BASKETBALL: 'Basketball', sp_SOCCER: 'Fußball', sp_HANDBALL: 'Handball', sp_ICE_HOCKEY: 'Eishockey', sp_LACROSSE: 'Lacrosse',
-    sp_AMERICAN_FOOTBALL: 'American Football', sp_VOLLEYBALL: 'Volleyball',
-    var_full_high: 'Ganzes Feld · Kamera erhöht', var_full_low: 'Ganzes Feld · Kamera niedrig', var_half_high: 'Halbes Feld · Kamera erhöht',
-    var_half_low: 'Halbes Feld · Kamera niedrig', var_full: 'Ganzes Feld', var_half: 'Halbes Feld', ageAdult: 'ab 14 Jahren', ageYouth: 'unter 14',
-    autoconnect: 'automatisch verbinden', connectNow: 'Jetzt verbinden', disconnect: 'Trennen', scan: 'Suchen', forget: 'Vergessen',
-    live: 'Livebild', startPreview: 'Vorschau starten', stop: 'Stopp', yaw: 'Schwenk', pitch: 'Neigung', cancel: 'Abbrechen',
-    pv_new: 'startet…', pv_connecting: 'verbinde…', pv_connected: 'live', pv_disconnected: 'unterbrochen', pv_closed: 'beendet',
-    pv_nopath: 'kein Videoweg', pv_nopath_title: 'Kein Videoweg.',
-    pv_nopath_text: 'Der Browser erreicht das Handy nicht direkt. Browser und Handy müssen im selben Netzwerk sein.',
-    pv_failed: 'Vorschau fehlgeschlagen:', pv_blocked: 'Der Browser hat die Wiedergabe gestoppt — bitte Vorschau starten.',
-    manual: 'Gimbal · manuell / Override', holdHint: 'Taste gedrückt halten (oder Pfeiltasten) · auch während des Trackings als Override', speed: 'Geschwindigkeit',
-    tracking: 'Tracking', streaming: 'Streaming', recording: 'Aufnahme', settings: 'Einstellungen', mode: 'Modus',
-    modeBasketball: 'Basketball', modeSoccer: 'Fußball', modeSingle: 'Einzelperson', modeGroup: 'Gruppe / frei',
-    rotAngle: 'Kameradrehwinkel', accel: 'Beschleunigung', trackAuto: 'Tracking beim App-Start automatisch starten (sobald der Gimbal verbunden ist)',
-    angleHint: 'Der Winkel gilt ± um die Richtung, in die die Kamera beim Tracking-Start zeigt: auf die Mittellinie zielen, dann Tracking einschalten.',
-    display: 'Handy-Display', scrOn: 'Display an lassen', scrDim: 'abdunkeln: schwarzer Bildschirm (Tippen am Handy weckt es)', scrTimeout: 'System-Timeout: Display schaltet sich selbst ab',
-    displayHint: 'Kamera, Stream und Gimbal laufen auch mit dunklem oder ausgeschaltetem Display weiter.',
-    recordingsLink: 'Aufnahmen', remoteLink: 'Remote', statusCard: 'Status', phoneLbl: 'Handy',
-    battery: 'Akku', onPower: 'am Strom', onBattery: 'Akkubetrieb', temp: 'Temperatur', free: 'frei', recLeft: 'Aufnahme',
-    th_none: 'normal', th_light: 'leicht erhöht', th_moderate: 'erhöht', th_severe: 'hoch — Handy drosselt', th_critical: 'kritisch', th_emergency: 'kritisch', th_shutdown: 'kritisch — schaltet ab', th_unknown: '—',
-    streamAuto: 'Streaming beim App-Start automatisch starten', recAuto: 'Aufnahme beim App-Start automatisch starten',
-    filesHint: 'Dateien: öffentlicher Ordner Movies/CamLeon (Galerie, Eigene Dateien, USB)', video: 'Video · Stream + Aufnahme', quality: 'Qualität', audio: 'Audio', previewQuality: 'Browser-Vorschau (je Betrachter, 30 fps)',
-    // dynamic
-    gimbal: 'Gimbal', last: 'zuletzt', lastUsed: 'zuletzt verbunden', noRemembered: 'kein Gimbal gemerkt', connect: 'Verbinden', noName: '(ohne Namen)',
-    sdkRunning: 'Gimbal-SDK läuft', starting: 'startet…', idle: 'bereit', connectFirst: 'zuerst den Gimbal verbinden',
-    liveAt: 'live', connecting: 'verbinde…', error: 'Fehler', setUrl: 'unten eine RTMP-URL eintragen', recordingTo: 'nimmt auf →', savesTo: 'speichert nach Movies/CamLeon (Galerie)',
-    fromSdk: '(vom Tracking-SDK)', notConnected: 'nicht verbunden', driving: 'fährt auf 0°…', lockedWhile: 'gesperrt während', trackingRuns: 'Tracking läuft',
-    cameraMax: 'Kamera liefert bei dieser Auflösung höchstens', fpsStreaming: 'fps → Stream', cameraCapture: 'Kameraaufnahme',
-    // server phrases
-    'ready': 'verbunden', 'idle ': 'bereit', 'bluetooth off': 'Bluetooth aus', 'searching for gimbal': 'suche Gimbal',
-    'disconnected by user (auto-connect paused)': 'vom Nutzer getrennt (automatisches Verbinden pausiert)',
-    'preparing gimbal…': 'Gimbal wird vorbereitet…', 'waiting for the gimbal to settle…': 'warte, bis der Gimbal still steht…',
-    'gimbal did not confirm SDK start — try again': 'Gimbal hat den SDK-Start nicht bestätigt — bitte erneut versuchen',
-    'gimbal not connected — tracking will apply once connected': 'Gimbal nicht verbunden — Tracking startet, sobald verbunden',
-    'gimbal not connected': 'Gimbal nicht verbunden', 'no gimbal angle yet': 'noch keine Gimbal-Winkel',
-  }
-};
-let lang = (() => { try { return localStorage.getItem('lang'); } catch (e) { return null; } })() || ((navigator.language || 'en').toLowerCase().startsWith('de') ? 'de' : 'en');
-const t = k => (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
-// server-side status strings: exact match, "connecting to X", "waiting (Ns)", "centre NOT re-based …"
-function tr(msg) {
-  if (!msg || lang === 'en') return msg || '';
-  if (I18N.de[msg]) return I18N.de[msg];
-  if (msg.startsWith('connecting to ')) return 'verbinde mit ' + msg.slice(14);
-  if (msg.startsWith('waiting (')) return 'warte ' + msg.slice(8);
-  if (msg.startsWith('centre NOT re-based')) return msg.replace('centre NOT re-based at start', 'Mitte beim Start NICHT neu gesetzt').replace('switch tracking off and on again', 'Tracking aus- und wieder einschalten');
-  if (msg.startsWith('reconnecting: ')) return 'verbinde neu: ' + msg.slice(14);
-  return msg;
-}
-function applyLang() {
-  document.documentElement.lang = lang;
-  document.querySelectorAll('[data-i18n]').forEach(el => { const v = t(el.dataset.i18n); if (v !== el.dataset.i18n || lang === 'en') el.textContent = lang === 'en' ? (el.dataset.en || el.textContent) : v; });
-  $('langBtn').textContent = lang === 'de' ? 'EN' : 'DE';
-}
-function toggleLang() { modesSig = ''; lang = lang === 'de' ? 'en' : 'de'; try { localStorage.setItem('lang', lang); } catch (e) {} applyLang(); refresh(); }
-// remember the English originals so switching back works
-document.querySelectorAll('[data-i18n]').forEach(el => el.dataset.en = el.textContent);
+// ---- i18n: shared table + language handling in /i18n.js (static texts via data-i18n, dynamic via t(), phone messages via tr()) ----
+const { t, tr } = CamLeonI18N;
+let lang = CamLeonI18N.lang;
+function applyLang() { lang = CamLeonI18N.lang; CamLeonI18N.apply(document); }
+CamLeonI18N.mount($('langSel'), () => { modesSig = ''; applyLang(); refresh(); });
 applyLang();
 
 async function api(path, method='GET') {
@@ -441,6 +372,7 @@ async function refresh() {
       qsel.innerHTML = qlist.map(q => `<option value="${q.id}">${q.label}</option>`).join('');
     }
     $('quality').value = cfg.quality; $('audio').checked = cfg.audioEnabled; $('screenMode').value = cfg.screenMode || 'ON';
+    $('keepBg').checked = !!cfg.keepInBackground; $('keepBgHint').textContent = t(cfg.keepInBackground ? 'keepBgOn' : 'keepBgOff');
     const psel = $('previewQuality'), plist = (s.preview && s.preview.previewQualities) || [];
     if (plist.length && psel.options.length !== plist.length) psel.innerHTML = plist.map(q => `<option value="${q.id}">${q.label}</option>`).join('');
     psel.value = cfg.previewQuality || 'P540';

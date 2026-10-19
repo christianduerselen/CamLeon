@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CamLeon</string>
+
+    <!-- overlay / notification / permissions -->
+    <string name="dim_hint">CamLeon actief · tik om te wekken</string>
+    <string name="notif_channel">CamLeon-opname</string>
+    <string name="notif_channel_desc">Zichtbaar zolang CamLeon de camera en de gimbalverbinding actief houdt</string>
+    <string name="notif_title">CamLeon is actief</string>
+    <string name="notif_text_plain">camera en gimbalverbinding actief</string>
+    <string name="notif_text_url">browserbediening: %1$s</string>
+    <string name="perm_text">Camera en microfoon zijn nodig voor de live-weergave, streaming en opname; Bluetooth voor de gimbal.</string>
+    <string name="perm_button">Rechten verlenen</string>
+
+    <!-- main screen -->
+    <string name="overlay_track">◎ TRACK</string>
+    <string name="overlay_live">● LIVE %1$d kbps</string>
+    <string name="overlay_rec">● REC</string>
+    <string name="browser_none">Browserbediening: geen netwerk</string>
+    <string name="browser_url">Browserbediening: %1$s\n(tik op de QR-code om te vergroten)</string>
+    <string name="tracking">Tracking</string>
+    <string name="streaming">Streaming</string>
+    <string name="recording">Opname</string>
+    <string name="st_sdk_running">gimbal-SDK actief</string>
+    <string name="st_starting">start…</string>
+    <string name="st_idle">inactief</string>
+    <string name="st_connect_first">verbind eerst de gimbal</string>
+    <string name="st_set_url">stel een RTMP-URL in bij de instellingen</string>
+    <string name="st_connecting">verbinden…</string>
+    <string name="st_live">live · %1$d kbps</string>
+    <string name="st_error">fout: %1$s</string>
+    <string name="st_recording_to">neemt op → %1$s</string>
+    <string name="st_saves_to">slaat op in Movies/CamLeon (zichtbaar in Galerij)</string>
+    <string name="settings_show">Instellingen ▼</string>
+    <string name="settings_hide">Instellingen verbergen ▲</string>
+
+    <!-- gimbal link -->
+    <string name="gimbal">Gimbal</string>
+    <string name="gimbal_connected">Gimbal verbonden</string>
+    <string name="gimbal_named">Gimbal: %1$s</string>
+    <string name="connected">verbonden</string>
+    <string name="disconnect">Verbreken</string>
+    <string name="connect_now">Nu verbinden</string>
+    <string name="last_used">laatst gebruikt</string>
+    <string name="connect">Verbinden</string>
+    <string name="auto_connect">Automatisch verbinden</string>
+    <string name="forget">Vergeten</string>
+    <string name="scan">Zoeken</string>
+    <string name="last_gimbal">(laatste: %1$s)</string>
+    <string name="no_gimbal_remembered">(geen gimbal onthouden)</string>
+    <string name="no_name">(zonder naam)</string>
+
+    <!-- pad -->
+    <string name="to_zero">→ 0°</string>
+    <string name="axis_yaw">Pannen</string>
+    <string name="axis_pitch">Kantelen</string>
+    <string name="not_connected">(niet verbonden)</string>
+    <string name="driving_to_zero">gaat naar 0°…</string>
+    <string name="cancel">Annuleren</string>
+    <string name="quit">Afsluiten</string>
+    <string name="status">Status</string>
+    <string name="stat_phone">Telefoon</string>
+    <string name="stat_battery">Batterij %1$d %%</string>
+    <string name="stat_on_power">op netstroom</string>
+    <string name="stat_on_battery">op batterij</string>
+    <string name="stat_free">%1$s vrij</string>
+    <string name="stat_rec_left_h">(≈ %1$d u opname)</string>
+    <string name="stat_rec_left_min">(≈ %1$d min opname)</string>
+    <string name="stat_temp">Temperatuur: %1$s</string>
+    <string name="stat_not_connected">niet verbonden</string>
+    <string name="th_none">normaal</string>
+    <string name="th_light">iets verhoogd</string>
+    <string name="th_moderate">verhoogd</string>
+    <string name="th_severe">hoog — telefoon remt af</string>
+    <string name="th_critical">kritiek</string>
+    <string name="th_shutdown">kritiek — schakelt uit</string>
+    <string name="th_unknown">—</string>
+    <string name="quit_title">CamLeon afsluiten?</string>
+    <string name="quit_busy">Nog actief: %1$s. Afsluiten stopt alles; een lopende opname wordt eerst opgeslagen.</string>
+    <string name="quit_idle">Camera, gimbalverbinding en browserbediening worden gestopt.</string>
+    <string name="quit_what_stream">Stream</string>
+    <string name="quit_what_record">Opname</string>
+    <string name="quit_what_track">Tracking</string>
+    <string name="speed">snelheid %1$d</string>
+    <string name="pad_hint">0° = richting bij de laatste trackingstart. Houd een knop ingedrukt om te pannen/kantelen, ook als override tijdens tracking.</string>
+
+    <!-- settings -->
+    <string name="locked_while">vergrendeld zolang %1$s</string>
+    <string name="tracking_runs">tracking actief is</string>
+    <string name="rot_angle">Camera-draaihoek %1$d°  (60–150)</string>
+    <string name="accel">Versnelling %1$d  (200–1000)</string>
+    <string name="track_auto">Tracking automatisch starten bij het openen van de app (zodra de gimbal verbonden is)</string>
+    <string name="angle_hint">De hoek geldt ± rond de richting waarin de camera bij de trackingstart kijkt: richt op de middenlijn en schakel dan tracking in.</string>
+    <string name="rtmp_url">RTMP-URL</string>
+    <string name="save">Opslaan</string>
+    <string name="stream_auto">Streaming automatisch starten bij het openen van de app</string>
+    <string name="rec_auto">Opname automatisch starten bij het openen van de app</string>
+    <string name="files_hint">Bestanden komen in de openbare map Movies/CamLeon (Galerij, Bestanden, USB).</string>
+    <string name="video_section">Video (stream + opname)</string>
+    <string name="audio">Audio</string>
+    <string name="preview_chip">Browserweergave: %1$s</string>
+    <string name="phone_section">Telefoon</string>
+    <string name="display_label">Scherm</string>
+    <string name="scr_on">aan laten</string>
+    <string name="scr_dim">dimmen (tik om te wekken)</string>
+    <string name="scr_timeout">systeemtime-out</string>
+    <string name="display_hint">Camera, stream en gimbal blijven draaien met een donker of uitgeschakeld scherm (voorgrondservice).</string>
+    <string name="keep_background">Op de achtergrond blijven draaien</string>
+    <string name="keep_background_off_hint">CamLeon wegvegen uit de recente apps sluit de app af (een lopende opname wordt eerst opgeslagen).</string>
+    <string name="keep_background_on_hint">Alleen „Afsluiten” sluit CamLeon af; wegvegen uit de recente apps laat alles doorlopen.</string>
+
+    <!-- status messages produced by the session (English keys, translated here) -->
+    <string name="msg_preparing">gimbal wordt voorbereid…</string>
+    <string name="msg_not_connected_tracking">gimbal niet verbonden — tracking start zodra verbonden</string>
+    <string name="msg_settle">wachten tot de gimbal stilstaat…</string>
+    <string name="msg_no_confirm">gimbal heeft de SDK-start niet bevestigd — probeer opnieuw</string>
+    <string name="msg_gimbal_not_connected">gimbal niet verbonden</string>
+    <string name="msg_no_angle">nog geen gimbalhoek</string>
+    <string name="msg_rebase_failed">midden NIET opnieuw ingesteld bij de start (SDK-yaw %1$s°) — schakel tracking uit en weer in</string>
+    <string name="phase_ready">gereed</string>
+    <string name="phase_idle">inactief</string>
+    <string name="phase_bt_off">Bluetooth uit</string>
+    <string name="phase_searching">zoekt gimbal</string>
+    <string name="phase_screen_off">scherm uit — zet het aan om de gimbal te zoeken</string>
+    <string name="phase_paused">verbroken door gebruiker (automatisch verbinden gepauzeerd)</string>
+    <string name="phase_connecting_to">verbinden met %1$s</string>
+    <string name="phase_waiting">wachten %1$s</string>
+    <string name="sport_basketball">Basketbal</string>
+    <string name="sport_soccer">Voetbal</string>
+    <string name="sport_handball">Handbal</string>
+    <string name="sport_ice_hockey">IJshockey</string>
+    <string name="sport_lacrosse">Lacrosse</string>
+    <string name="sport_american_football">American football</string>
+    <string name="sport_volleyball">Volleybal</string>
+    <string name="var_full_high">Heel veld · camera verhoogd</string>
+    <string name="var_full_low">Heel veld · camera laag</string>
+    <string name="var_half_high">Half veld · camera verhoogd</string>
+    <string name="var_half_low">Half veld · camera laag</string>
+    <string name="var_full">Heel veld</string>
+    <string name="var_half">Half veld</string>
+    <string name="age_adult">14 jaar en ouder</string>
+    <string name="age_youth">Onder 14</string>
+</resources>

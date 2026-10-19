@@ -9,6 +9,8 @@ streaming and local recording, plus a browser control page with live preview in 
 - Phone (landscape on the Chameleon) runs the app; everything is also controllable from a browser:
   `http://<phone-ip>:8080` (QR code in the app).
 - Tracking runs on the gimbal itself; the app talks to it over BLE (protocol: [docs/ble-protocol.md](docs/ble-protocol.md)).
+- The app remembers the gimbal and reconnects to it on its own, also with the screen off. Searching for a
+  new gimbal needs the screen on (Android allows no unfiltered Bluetooth scan in screen-off); the app says so.
 - Streaming/recording: RootEncoder (H.264/AAC), one encoder shared by stream and recording.
   Preview to the browser: WebRTC at 30 fps, resolution/bitrate per the "Browser preview" setting
   (360p · 0.8 Mbps … 1080p · 4 Mbps, default 540p · 1.5 Mbps; never above the capture resolution;
@@ -22,7 +24,9 @@ streaming and local recording, plus a browser control page with live preview in 
 ## At a glance
 
 The live picture in these screenshots is a drawn placeholder (`docs/tools/placeholder-court.svg`); the
-real thing shows the camera. App and pages are available in English and German (device language).
+real thing shows the camera. App and browser pages come in English, German, French, Spanish, Italian,
+Portuguese (Brazil), Dutch, Polish and Turkish: the app follows the phone's language (or its per-app
+language setting on Android 13+), the pages follow the browser's language with a selector at the top.
 
 <p align="center"><img src="docs/img/app.png" alt="CamLeon app on the phone: live picture, QR code for the browser control, the three switches, status" width="900"></p>
 
@@ -64,14 +68,17 @@ and one WebRTC encoder per browser viewer at the preview quality (30 fps, no aud
 
 ## Background operation and quitting
 
-CamLeon keeps running when its window is closed or the screen is locked: a foreground service
-(notification "CamLeon is running") holds camera, stream, recording, gimbal link and the browser
-control page. Swiping the app away from the recent apps does **not** stop it.
+CamLeon keeps running when its window is closed (Back, Home) or the screen is locked: a foreground
+service (notification "CamLeon is running") holds camera, stream, recording, gimbal link and the
+browser control page. Without it Android would take the camera away a few seconds after the screen
+locks.
 
-To end CamLeon use **Quit** — in the notification or in the app (bottom right, asks for confirmation
-while streaming, recording or tracking). Quit stops tracking, finishes a running recording, stops the
-stream, disconnects the gimbal and ends the app. Avoid Android's "Force stop" (or reinstalling) during
-a recording: the MP4 is then not finalized and usually does not play.
+Swiping CamLeon away from the recent apps ends it, like any other app — but orderly: tracking stops, a
+running recording is finished, the stream stops, the gimbal is disconnected. For unattended use switch
+on **Keep running in background** (settings → Phone, also on the control page): then only **Quit**
+ends CamLeon — in the notification or in the app (bottom right, asks for confirmation while
+streaming, recording or tracking). Avoid Android's "Force stop" (or reinstalling) during a recording:
+the MP4 is then not finalized and usually does not play.
 
 ## Build
 
@@ -138,7 +145,7 @@ POST /api/tracking?on=true|false
 POST /api/streaming?on=true|false
 POST /api/recording?on=true|false
 GET  /api/status
-POST /api/settings?quality=P1080&audio=true&previewQuality=P540&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=85&acceleration=1000
+POST /api/settings?quality=P1080&audio=true&previewQuality=P540&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=85&acceleration=1000&screenMode=ON&keepInBackground=false
 POST /api/gimbal/move?yaw=-100..100&pitch=-100..100      POST /api/gimbal/stop
 POST /api/gimbal/home?axis=yaw|pitch                     POST /api/gimbal/home/cancel
 GET  /api/snapshot.jpg                                    (current camera frame at capture resolution)

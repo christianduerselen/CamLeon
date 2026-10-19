@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CamLeon</string>
+
+    <!-- overlay / notification / permissions -->
+    <string name="dim_hint">CamLeon çalışıyor · uyandırmak için dokunun</string>
+    <string name="notif_channel">CamLeon çekim</string>
+    <string name="notif_channel_desc">CamLeon kamerayı ve gimbal bağlantısını açık tuttuğu sürece gösterilir</string>
+    <string name="notif_title">CamLeon çalışıyor</string>
+    <string name="notif_text_plain">kamera ve gimbal bağlantısı etkin</string>
+    <string name="notif_text_url">tarayıcıdan kontrol: %1$s</string>
+    <string name="perm_text">Canlı önizleme, yayın ve kayıt için kamera ve mikrofon; gimbal için Bluetooth gerekir.</string>
+    <string name="perm_button">İzinleri ver</string>
+
+    <!-- main screen -->
+    <string name="overlay_track">◎ TAKİP</string>
+    <string name="overlay_live">● CANLI %1$d kbps</string>
+    <string name="overlay_rec">● KAYIT</string>
+    <string name="browser_none">Tarayıcıdan kontrol: ağ yok</string>
+    <string name="browser_url">Tarayıcıdan kontrol: %1$s\n(büyütmek için QR koduna dokunun)</string>
+    <string name="tracking">Takip</string>
+    <string name="streaming">Yayın</string>
+    <string name="recording">Kayıt</string>
+    <string name="st_sdk_running">gimbal SDK çalışıyor</string>
+    <string name="st_starting">başlatılıyor…</string>
+    <string name="st_idle">boşta</string>
+    <string name="st_connect_first">önce gimbali bağlayın</string>
+    <string name="st_set_url">ayarlarda bir RTMP adresi girin</string>
+    <string name="st_connecting">bağlanıyor…</string>
+    <string name="st_live">canlı · %1$d kbps</string>
+    <string name="st_error">hata: %1$s</string>
+    <string name="st_recording_to">kaydediyor → %1$s</string>
+    <string name="st_saves_to">Movies/CamLeon klasörüne kaydeder (Galeri\'de görünür)</string>
+    <string name="settings_show">Ayarlar ▼</string>
+    <string name="settings_hide">Ayarları gizle ▲</string>
+
+    <!-- gimbal link -->
+    <string name="gimbal">Gimbal</string>
+    <string name="gimbal_connected">Gimbal bağlı</string>
+    <string name="gimbal_named">Gimbal: %1$s</string>
+    <string name="connected">bağlı</string>
+    <string name="disconnect">Bağlantıyı kes</string>
+    <string name="connect_now">Şimdi bağlan</string>
+    <string name="last_used">son kullanılan</string>
+    <string name="connect">Bağlan</string>
+    <string name="auto_connect">Otomatik bağlan</string>
+    <string name="forget">Unut</string>
+    <string name="scan">Ara</string>
+    <string name="last_gimbal">(son: %1$s)</string>
+    <string name="no_gimbal_remembered">(kayıtlı gimbal yok)</string>
+    <string name="no_name">(adsız)</string>
+
+    <!-- pad -->
+    <string name="to_zero">→ 0°</string>
+    <string name="axis_yaw">Pan</string>
+    <string name="axis_pitch">Eğim</string>
+    <string name="not_connected">(bağlı değil)</string>
+    <string name="driving_to_zero">0° konumuna dönüyor…</string>
+    <string name="cancel">İptal</string>
+    <string name="quit">Çıkış</string>
+    <string name="status">Durum</string>
+    <string name="stat_phone">Telefon</string>
+    <string name="stat_battery">Pil %%%1$d</string>
+    <string name="stat_on_power">şarjda</string>
+    <string name="stat_on_battery">pilde</string>
+    <string name="stat_free">%1$s boş</string>
+    <string name="stat_rec_left_h">(≈ %1$d sa kayıt)</string>
+    <string name="stat_rec_left_min">(≈ %1$d dk kayıt)</string>
+    <string name="stat_temp">Sıcaklık: %1$s</string>
+    <string name="stat_not_connected">bağlı değil</string>
+    <string name="th_none">normal</string>
+    <string name="th_light">biraz yüksek</string>
+    <string name="th_moderate">yüksek</string>
+    <string name="th_severe">çok yüksek — telefon yavaşlıyor</string>
+    <string name="th_critical">kritik</string>
+    <string name="th_shutdown">kritik — kapanıyor</string>
+    <string name="th_unknown">—</string>
+    <string name="quit_title">CamLeon\'dan çıkılsın mı?</string>
+    <string name="quit_busy">Hâlâ etkin: %1$s. Çıkış her şeyi durdurur; süren kayıt önce kaydedilir.</string>
+    <string name="quit_idle">Kamera, gimbal bağlantısı ve tarayıcı kontrolü durdurulacak.</string>
+    <string name="quit_what_stream">Yayın</string>
+    <string name="quit_what_record">Kayıt</string>
+    <string name="quit_what_track">Takip</string>
+    <string name="speed">hız %1$d</string>
+    <string name="pad_hint">0° = son takip başlangıcındaki yön. Pan/eğim için bir düğmeyi basılı tutun; takip sırasında da geçersiz kılma olarak çalışır.</string>
+
+    <!-- settings -->
+    <string name="locked_while">%1$s sırasında kilitli</string>
+    <string name="tracking_runs">takip çalışırken</string>
+    <string name="rot_angle">Kamera dönüş açısı %1$d°  (60–150)</string>
+    <string name="accel">İvme %1$d  (200–1000)</string>
+    <string name="track_auto">Uygulama açılınca takibi otomatik başlat (gimbal bağlanır bağlanmaz)</string>
+    <string name="angle_hint">Açı, takip başladığında kameranın baktığı yönün ± etrafında geçerlidir: orta çizgiye nişan alın, sonra takibi açın.</string>
+    <string name="rtmp_url">RTMP adresi</string>
+    <string name="save">Kaydet</string>
+    <string name="stream_auto">Uygulama açılınca yayını otomatik başlat</string>
+    <string name="rec_auto">Uygulama açılınca kaydı otomatik başlat</string>
+    <string name="files_hint">Dosyalar herkese açık Movies/CamLeon klasörüne gider (Galeri, Dosyalar, USB).</string>
+    <string name="video_section">Video (yayın + kayıt)</string>
+    <string name="audio">Ses</string>
+    <string name="preview_chip">Tarayıcı önizlemesi: %1$s</string>
+    <string name="phone_section">Telefon</string>
+    <string name="display_label">Ekran</string>
+    <string name="scr_on">açık tut</string>
+    <string name="scr_dim">karart (dokunma uyandırır)</string>
+    <string name="scr_timeout">sistem zaman aşımı</string>
+    <string name="display_hint">Ekran karanlık veya kapalıyken kamera, yayın ve gimbal çalışmaya devam eder (ön plan hizmeti).</string>
+    <string name="keep_background">Arka planda çalışmaya devam et</string>
+    <string name="keep_background_off_hint">CamLeon\'u son uygulamalardan kaydırıp kapatmak uygulamayı sonlandırır (süren kayıt önce kaydedilir).</string>
+    <string name="keep_background_on_hint">CamLeon\'u yalnızca „Çıkış” sonlandırır; son uygulamalardan kaydırmak her şeyi çalışır bırakır.</string>
+
+    <!-- status messages produced by the session (English keys, translated here) -->
+    <string name="msg_preparing">gimbal hazırlanıyor…</string>
+    <string name="msg_not_connected_tracking">gimbal bağlı değil — takip bağlanınca başlayacak</string>
+    <string name="msg_settle">gimbalin sabitlenmesi bekleniyor…</string>
+    <string name="msg_no_confirm">gimbal SDK başlangıcını onaylamadı — tekrar deneyin</string>
+    <string name="msg_gimbal_not_connected">gimbal bağlı değil</string>
+    <string name="msg_no_angle">henüz gimbal açısı yok</string>
+    <string name="msg_rebase_failed">merkez başlangıçta YENİDEN ayarlanmadı (SDK yaw %1$s°) — takibi kapatıp yeniden açın</string>
+    <string name="phase_ready">hazır</string>
+    <string name="phase_idle">boşta</string>
+    <string name="phase_bt_off">Bluetooth kapalı</string>
+    <string name="phase_searching">gimbal aranıyor</string>
+    <string name="phase_screen_off">ekran kapalı — gimbali aramak için açın</string>
+    <string name="phase_paused">kullanıcı bağlantıyı kesti (otomatik bağlanma duraklatıldı)</string>
+    <string name="phase_connecting_to">%1$s ile bağlanıyor</string>
+    <string name="phase_waiting">bekleniyor %1$s</string>
+    <string name="sport_basketball">Basketbol</string>
+    <string name="sport_soccer">Futbol</string>
+    <string name="sport_handball">Hentbol</string>
+    <string name="sport_ice_hockey">Buz hokeyi</string>
+    <string name="sport_lacrosse">Lakros</string>
+    <string name="sport_american_football">Amerikan futbolu</string>
+    <string name="sport_volleyball">Voleybol</string>
+    <string name="var_full_high">Tam saha · yüksek kamera</string>
+    <string name="var_full_low">Tam saha · alçak kamera</string>
+    <string name="var_half_high">Yarı saha · yüksek kamera</string>
+    <string name="var_half_low">Yarı saha · alçak kamera</string>
+    <string name="var_full">Tam saha</string>
+    <string name="var_half">Yarı saha</string>
+    <string name="age_adult">14 yaş ve üzeri</string>
+    <string name="age_youth">14 yaş altı</string>
+</resources>

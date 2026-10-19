@@ -92,11 +92,15 @@
     <string name="video_section">Video (Stream + Aufnahme)</string>
     <string name="audio">Audio</string>
     <string name="preview_chip">Browser-Vorschau: %1$s</string>
-    <string name="display_section">Handy-Display</string>
+    <string name="phone_section">Handy</string>
+    <string name="display_label">Display</string>
     <string name="scr_on">an lassen</string>
     <string name="scr_dim">abdunkeln (Tippen weckt)</string>
     <string name="scr_timeout">System-Timeout</string>
     <string name="display_hint">Kamera, Stream und Gimbal laufen auch mit dunklem oder ausgeschaltetem Display weiter (Vordergrunddienst).</string>
+    <string name="keep_background">Im Hintergrund weiterlaufen</string>
+    <string name="keep_background_off_hint">Wegwischen aus der App-Übersicht beendet CamLeon (eine laufende Aufnahme wird vorher gespeichert).</string>
+    <string name="keep_background_on_hint">Nur „Beenden“ beendet CamLeon; Wegwischen aus der App-Übersicht lässt alles weiterlaufen.</string>
 
     <string name="msg_preparing">Gimbal wird vorbereitet…</string>
     <string name="msg_not_connected_tracking">Gimbal nicht verbunden — Tracking startet, sobald verbunden</string>
@@ -109,6 +113,7 @@
     <string name="phase_idle">bereit</string>
     <string name="phase_bt_off">Bluetooth aus</string>
     <string name="phase_searching">suche Gimbal</string>
+    <string name="phase_screen_off">Display aus — zum Suchen des Gimbals einschalten</string>
     <string name="phase_paused">vom Nutzer getrennt (automatisches Verbinden pausiert)</string>
     <string name="phase_connecting_to">verbinde mit %1$s</string>
     <string name="phase_waiting">warte %1$s</string>

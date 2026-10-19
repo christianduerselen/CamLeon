@@ -21,6 +21,10 @@ import de.camleon.common.NetUtil
  * the preview/stream go black. The service does no work itself — [CaptureSession] holds everything —
  * it only carries the foreground state and a notification with the browser control URL and a Quit
  * action ([AppQuit]).
+ *
+ * A started foreground service also survives the user swiping CamLeon away from the recent apps.
+ * That is wanted for unattended use but surprising otherwise, so by default ([CaptureSettings.keepInBackground]
+ * off) a swipe-away runs the same orderly [AppQuit] as the Quit button.
  */
 class CaptureService : Service() {
 
@@ -68,6 +72,13 @@ class CaptureService : Service() {
             .setOngoing(true)
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
+    }
+
+    /** The user swiped CamLeon away from the recent apps (or "close all"). */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        if (CaptureSession.settings.value.keepInBackground) Log.i(TAG, "task removed; keepInBackground → staying alive")
+        else { Log.i(TAG, "task removed → quit"); AppQuit.quit(this) }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CamLeon</string>
+
+    <!-- overlay / notification / permissions -->
+    <string name="dim_hint">CamLeon in esecuzione · tocca per riattivare</string>
+    <string name="notif_channel">Cattura CamLeon</string>
+    <string name="notif_channel_desc">Mostrata finché CamLeon mantiene attivi la fotocamera e il collegamento al gimbal</string>
+    <string name="notif_title">CamLeon è in esecuzione</string>
+    <string name="notif_text_plain">fotocamera e collegamento al gimbal attivi</string>
+    <string name="notif_text_url">controllo dal browser: %1$s</string>
+    <string name="perm_text">Fotocamera e microfono servono per l\'anteprima, lo streaming e la registrazione; il Bluetooth per il gimbal.</string>
+    <string name="perm_button">Concedi i permessi</string>
+
+    <!-- main screen -->
+    <string name="overlay_track">◎ TRACK</string>
+    <string name="overlay_live">● LIVE %1$d kbps</string>
+    <string name="overlay_rec">● REC</string>
+    <string name="browser_none">Controllo dal browser: nessuna rete</string>
+    <string name="browser_url">Controllo dal browser: %1$s\n(tocca il codice QR per ingrandirlo)</string>
+    <string name="tracking">Tracciamento</string>
+    <string name="streaming">Streaming</string>
+    <string name="recording">Registrazione</string>
+    <string name="st_sdk_running">SDK del gimbal attivo</string>
+    <string name="st_starting">avvio…</string>
+    <string name="st_idle">inattivo</string>
+    <string name="st_connect_first">collega prima il gimbal</string>
+    <string name="st_set_url">imposta un URL RTMP nelle impostazioni</string>
+    <string name="st_connecting">connessione…</string>
+    <string name="st_live">live · %1$d kbps</string>
+    <string name="st_error">errore: %1$s</string>
+    <string name="st_recording_to">registra → %1$s</string>
+    <string name="st_saves_to">salva in Movies/CamLeon (visibile nella Galleria)</string>
+    <string name="settings_show">Impostazioni ▼</string>
+    <string name="settings_hide">Nascondi impostazioni ▲</string>
+
+    <!-- gimbal link -->
+    <string name="gimbal">Gimbal</string>
+    <string name="gimbal_connected">Gimbal collegato</string>
+    <string name="gimbal_named">Gimbal: %1$s</string>
+    <string name="connected">collegato</string>
+    <string name="disconnect">Scollega</string>
+    <string name="connect_now">Collega ora</string>
+    <string name="last_used">ultimo usato</string>
+    <string name="connect">Collega</string>
+    <string name="auto_connect">Collegamento automatico</string>
+    <string name="forget">Dimentica</string>
+    <string name="scan">Cerca</string>
+    <string name="last_gimbal">(ultimo: %1$s)</string>
+    <string name="no_gimbal_remembered">(nessun gimbal memorizzato)</string>
+    <string name="no_name">(senza nome)</string>
+
+    <!-- pad -->
+    <string name="to_zero">→ 0°</string>
+    <string name="axis_yaw">Panoramica</string>
+    <string name="axis_pitch">Inclinazione</string>
+    <string name="not_connected">(non collegato)</string>
+    <string name="driving_to_zero">ritorno a 0°…</string>
+    <string name="cancel">Annulla</string>
+    <string name="quit">Esci</string>
+    <string name="status">Stato</string>
+    <string name="stat_phone">Telefono</string>
+    <string name="stat_battery">Batteria %1$d %%</string>
+    <string name="stat_on_power">alimentato</string>
+    <string name="stat_on_battery">a batteria</string>
+    <string name="stat_free">%1$s liberi</string>
+    <string name="stat_rec_left_h">(≈ %1$d h di registrazione)</string>
+    <string name="stat_rec_left_min">(≈ %1$d min di registrazione)</string>
+    <string name="stat_temp">Temperatura: %1$s</string>
+    <string name="stat_not_connected">non collegato</string>
+    <string name="th_none">normale</string>
+    <string name="th_light">leggermente alta</string>
+    <string name="th_moderate">alta</string>
+    <string name="th_severe">molto alta — il telefono rallenta</string>
+    <string name="th_critical">critica</string>
+    <string name="th_shutdown">critica — spegnimento</string>
+    <string name="th_unknown">—</string>
+    <string name="quit_title">Uscire da CamLeon?</string>
+    <string name="quit_busy">Ancora attivo: %1$s. Uscire ferma tutto; una registrazione in corso viene prima salvata.</string>
+    <string name="quit_idle">Fotocamera, collegamento al gimbal e controllo dal browser verranno fermati.</string>
+    <string name="quit_what_stream">Stream</string>
+    <string name="quit_what_record">Registrazione</string>
+    <string name="quit_what_track">Tracciamento</string>
+    <string name="speed">velocità %1$d</string>
+    <string name="pad_hint">0° = direzione all\'ultimo avvio del tracciamento. Tieni premuto un pulsante per ruotare/inclinare, anche come override durante il tracciamento.</string>
+
+    <!-- settings -->
+    <string name="locked_while">bloccato mentre %1$s</string>
+    <string name="tracking_runs">il tracciamento è attivo</string>
+    <string name="rot_angle">Angolo di rotazione della camera %1$d°  (60–150)</string>
+    <string name="accel">Accelerazione %1$d  (200–1000)</string>
+    <string name="track_auto">Avvia il tracciamento automaticamente all\'apertura dell\'app (appena il gimbal si collega)</string>
+    <string name="angle_hint">L\'angolo vale ± intorno alla direzione della camera all\'avvio del tracciamento: punta alla linea di metà campo, poi attiva il tracciamento.</string>
+    <string name="rtmp_url">URL RTMP</string>
+    <string name="save">Salva</string>
+    <string name="stream_auto">Avvia lo streaming automaticamente all\'apertura dell\'app</string>
+    <string name="rec_auto">Avvia la registrazione automaticamente all\'apertura dell\'app</string>
+    <string name="files_hint">I file vanno nella cartella pubblica Movies/CamLeon (Galleria, File, USB).</string>
+    <string name="video_section">Video (stream + registrazione)</string>
+    <string name="audio">Audio</string>
+    <string name="preview_chip">Anteprima nel browser: %1$s</string>
+    <string name="phone_section">Telefono</string>
+    <string name="display_label">Schermo</string>
+    <string name="scr_on">lascia acceso</string>
+    <string name="scr_dim">oscura (tocca per riattivare)</string>
+    <string name="scr_timeout">timeout di sistema</string>
+    <string name="display_hint">Fotocamera, stream e gimbal continuano anche con lo schermo scuro o spento (servizio in primo piano).</string>
+    <string name="keep_background">Continua in background</string>
+    <string name="keep_background_off_hint">Scorrere via CamLeon dalle app recenti la chiude (una registrazione in corso viene prima salvata).</string>
+    <string name="keep_background_on_hint">Solo «Esci» chiude CamLeon; scorrerla via dalle app recenti lascia tutto in esecuzione.</string>
+
+    <!-- status messages produced by the session (English keys, translated here) -->
+    <string name="msg_preparing">preparazione del gimbal…</string>
+    <string name="msg_not_connected_tracking">gimbal non collegato — il tracciamento partirà appena collegato</string>
+    <string name="msg_settle">attendo che il gimbal si stabilizzi…</string>
+    <string name="msg_no_confirm">il gimbal non ha confermato l\'avvio dell\'SDK — riprova</string>
+    <string name="msg_gimbal_not_connected">gimbal non collegato</string>
+    <string name="msg_no_angle">ancora nessun angolo dal gimbal</string>
+    <string name="msg_rebase_failed">centro NON ricalibrato all\'avvio (yaw SDK %1$s°) — disattiva e riattiva il tracciamento</string>
+    <string name="phase_ready">pronto</string>
+    <string name="phase_idle">inattivo</string>
+    <string name="phase_bt_off">Bluetooth spento</string>
+    <string name="phase_searching">ricerca del gimbal</string>
+    <string name="phase_screen_off">schermo spento — accendilo per cercare il gimbal</string>
+    <string name="phase_paused">scollegato dall\'utente (collegamento automatico in pausa)</string>
+    <string name="phase_connecting_to">connessione a %1$s</string>
+    <string name="phase_waiting">attesa %1$s</string>
+    <string name="sport_basketball">Basket</string>
+    <string name="sport_soccer">Calcio</string>
+    <string name="sport_handball">Pallamano</string>
+    <string name="sport_ice_hockey">Hockey su ghiaccio</string>
+    <string name="sport_lacrosse">Lacrosse</string>
+    <string name="sport_american_football">Football americano</string>
+    <string name="sport_volleyball">Pallavolo</string>
+    <string name="var_full_high">Campo intero · camera rialzata</string>
+    <string name="var_full_low">Campo intero · camera bassa</string>
+    <string name="var_half_high">Metà campo · camera rialzata</string>
+    <string name="var_half_low">Metà campo · camera bassa</string>
+    <string name="var_full">Campo intero</string>
+    <string name="var_half">Metà campo</string>
+    <string name="age_adult">14 anni e oltre</string>
+    <string name="age_youth">Under 14</string>
+</resources>

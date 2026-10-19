@@ -47,8 +47,8 @@ class ControlServer(private val context: Context, port: Int = DEFAULT_PORT) : Na
                 uri == "/" || uri == "/index.html" -> servePage("web/index.html")
                 uri == "/recordings" || uri == "/recordings.html" -> servePage("web/recordings.html")
                 uri == "/remote" || uri == "/remote.html" -> servePage("web/remote.html")
-                uri == "/control.js" -> {
-                    val js = context.assets.open("web/control.js").readBytes()
+                uri == "/control.js" || uri == "/i18n.js" -> {
+                    val js = context.assets.open("web" + uri).readBytes()
                     newFixedLengthResponse(Response.Status.OK, "application/javascript; charset=utf-8", java.io.ByteArrayInputStream(js), js.size.toLong())
                         .also { it.addHeader("Cache-Control", "no-cache") }     // changes with every version
                 }
