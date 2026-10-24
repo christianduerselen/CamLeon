@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
         add(Manifest.permission.RECORD_AUDIO)
         add(Manifest.permission.BLUETOOTH_SCAN)
         add(Manifest.permission.BLUETOOTH_CONNECT)
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) add(Manifest.permission.ACCESS_FINE_LOCATION)   // BLE scan needs it only on Android 10/11
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
         // Optional: lets the browser's recordings page also list files from before a reinstall.
         add(videoPermission())

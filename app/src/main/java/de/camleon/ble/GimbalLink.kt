@@ -89,11 +89,14 @@ class GimbalLink(context: Context, private val ble: ChameleonBleClient) {
                     backoff = 3_000L; delay(1_500); continue
                 }
                 if (ble.state.value == ChameleonBleClient.ConnState.CONNECTING || ble.state.value == ChameleonBleClient.ConnState.DISCOVERING) { delay(1_000); continue }
-                attempts++
+                attempts++; kickRequested = false   // a kick consumed by this attempt must not cut the next wait short
                 val ok = attempt()
                 if (!ok) {
                     _phase.value = "waiting (${backoff / 1000}s)"
-                    delay(backoff); backoff = (backoff * 2).coerceAtMost(30_000L)
+                    // back off, but let "Connect now" (kick) cut the wait short
+                    val t0 = System.currentTimeMillis()
+                    while (System.currentTimeMillis() - t0 < backoff && !kickRequested) delay(200)
+                    if (kickRequested) { kickRequested = false; backoff = 3_000L } else backoff = (backoff * 2).coerceAtMost(30_000L)
                 } else backoff = 3_000L
             }
         }
