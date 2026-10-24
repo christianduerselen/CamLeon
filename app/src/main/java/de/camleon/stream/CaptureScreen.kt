@@ -444,12 +444,13 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
             val videoLockedBy = if (lk.streaming && lk.recording) stringResource(R.string.streaming) + " / " + stringResource(R.string.recording)
                 else if (lk.streaming) stringResource(R.string.streaming) else stringResource(R.string.recording)
             Header(stringResource(R.string.video_section), lk.video, videoLockedBy)
-            // Rear camera (only when the phone exposes more than one): field of view · megapixels
+            // Rear camera: field of view · megapixels. With a single camera the chip only informs (many phones
+            // expose their extra lenses to their own camera app only).
             val cams = remember { CaptureSession.camera.backCameras() }
-            if (cams.size > 1) Box {
+            if (cams.isNotEmpty()) Box {
                 var cameraMenu by remember { mutableStateOf(false) }
                 val cur = cams.firstOrNull { it.id == s.cameraId } ?: cams.firstOrNull { it.id == CaptureSession.camera.currentCameraId() }
-                FilterChip(selected = true, enabled = !lk.video, onClick = { cameraMenu = true }, label = { Text(stringResource(R.string.camera_chip, cur?.label ?: "—")) })
+                FilterChip(selected = true, enabled = !lk.video && cams.size > 1, onClick = { cameraMenu = true }, label = { Text(stringResource(R.string.camera_chip, cur?.label ?: "—")) })
                 DropdownMenu(expanded = cameraMenu, onDismissRequest = { cameraMenu = false }) {
                     cams.forEach { c -> DropdownMenuItem(text = { Text(c.label) }, onClick = { onChange(s.copy(cameraId = c.id)); cameraMenu = false }) }
                 }

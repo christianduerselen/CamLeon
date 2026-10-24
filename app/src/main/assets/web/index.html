@@ -396,7 +396,7 @@ async function refresh() {
       : (pv.capture ? `${t('cameraCapture')} ${pv.capture}` : '');
     // rear camera (only when the phone exposes several) + zoom range of the camera in use
     const cams = pv.cameras || [], csel = $('camera');
-    $('cameraRow').style.display = cams.length > 1 ? '' : 'none';
+    $('cameraRow').style.display = cams.length ? '' : 'none';   // one camera: shown for information, not selectable
     if (cams.length && csel.options.length !== cams.length) csel.innerHTML = cams.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
     csel.value = cfg.cameraId || pv.camera || '';
     const zs = $('zoom'), zmin = pv.minZoom || 1, zmax = pv.maxZoom || 1;
@@ -415,7 +415,8 @@ async function refresh() {
     ['tSport', 'tVariant', 'tAge', 'yawRange', 'accel', 'trackAuto'].forEach(id => $(id).disabled = !!LK.tracking);
     ['url', 'streamAuto'].forEach(id => $(id).disabled = !!LK.streaming);
     $('recAuto').disabled = !!LK.recording;
-    ['quality', 'audio', 'camera'].forEach(id => $(id).disabled = !!LK.video);
+    ['quality', 'audio'].forEach(id => $(id).disabled = !!LK.video);
+    $('camera').disabled = !!LK.video || cams.length < 2;
     if (focused() !== 'yawRange') { $('yawRange').value = cfg.tracking.yawRange; $('yawRangeV').textContent = cfg.tracking.yawRange; }
     if (focused() !== 'accel') { $('accel').value = cfg.tracking.acceleration; $('accelV').textContent = cfg.tracking.acceleration; }
   } catch (e) { console.warn('refresh failed', e); /* keep last known */ }

@@ -375,7 +375,9 @@ object CaptureSession {
                 if (kotlin.math.abs(err) <= TILT_TOLERANCE) { ble.sendRaw(GimbalCommands.stop(GimbalCommands.AXIS_PITCH), "tilt stop"); if (++settled >= 3) break }
                 else {
                     settled = 0
-                    val sp = (kotlin.math.abs(err) * 2.5).toInt().coerceIn(12, 60)
+                    // A deliberate move to a known position: full speed while far away, braking only in the
+                    // last degrees (angles arrive a few times per second and a move without stop runs on ~1 s).
+                    val sp = if (kotlin.math.abs(err) > TILT_FULL_SPEED_ABOVE) 100 else (kotlin.math.abs(err) * 6).toInt().coerceIn(12, 50)
                     ble.sendRaw(GimbalCommands.move(GimbalCommands.AXIS_PITCH, if (err > 0) sp else -sp), "tilt restore")
                 }
                 delay(100)
@@ -418,6 +420,8 @@ object CaptureSession {
     private const val KEEP_ALIVE_MS = 800L
     /** Tilt restore target window in degrees (same as the drive-to-0° loop). */
     private const val TILT_TOLERANCE = 0.6
+    /** Above this remaining error the tilt restore drives at 100 %. */
+    private const val TILT_FULL_SPEED_ABOVE = 6.0
 
     /**
      * Callers (web pad, phone pad) call this repeatedly (~every 300 ms) while a button is held — a
