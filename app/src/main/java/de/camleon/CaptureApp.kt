@@ -16,11 +16,24 @@ class CaptureApp : Application() {
     override fun onCreate() {
         super.onCreate()
         CaptureSession.init(this)
+        startServer()
+    }
+
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private var serverTries = 0
+
+    /**
+     * Port 8080 may still be held by another CamLeon build that is just quitting (debug next to release):
+     * retry for a couple of minutes instead of running without a control page.
+     */
+    private fun startServer() {
         try {
             server = ControlServer(this).apply { start(SOCKET_READ_TIMEOUT, false) }
             Log.i(TAG, "control server started on port ${ControlServer.DEFAULT_PORT}")
         } catch (t: Throwable) {
-            Log.e(TAG, "failed to start control server", t)
+            runCatching { server?.stop() }; server = null
+            if (++serverTries < 40) { Log.w(TAG, "control server start failed (${t.message}) — retry in 3 s"); main.postDelayed(::startServer, 3_000) }
+            else Log.e(TAG, "control server could not start", t)
         }
     }
 

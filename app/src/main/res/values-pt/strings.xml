@@ -90,6 +90,7 @@
     <string name="rot_angle">Ângulo de rotação da câmera %1$d°  (60–150)</string>
     <string name="accel">Aceleração %1$d  (200–1000)</string>
     <string name="track_auto">Iniciar o rastreamento automaticamente ao abrir o app (assim que o gimbal conectar)</string>
+    <string name="keep_tilt">Manter a inclinação: após iniciar e após parar o rastreamento, voltar à inclinação anterior</string>
     <string name="angle_hint">O ângulo vale ± em torno da direção da câmera ao iniciar o rastreamento: mire na linha central e ative o rastreamento.</string>
     <string name="rtmp_url">URL RTMP</string>
     <string name="save">Salvar</string>
@@ -99,6 +100,9 @@
     <string name="video_section">Vídeo (stream + gravação)</string>
     <string name="audio">Áudio</string>
     <string name="preview_chip">Prévia no navegador: %1$s</string>
+    <string name="camera_chip">Câmera: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">O zoom recorta a imagem do sensor antes do redimensionamento (sem perda até cerca de 2× em 1080p). O gimbal rastreia com a própria câmera e não o vê.</string>
     <string name="phone_section">Celular</string>
     <string name="display_label">Tela</string>
     <string name="scr_on">manter ligada</string>

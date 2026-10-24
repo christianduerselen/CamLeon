@@ -90,6 +90,7 @@
     <string name="rot_angle">Ángulo de giro de la cámara %1$d°  (60–150)</string>
     <string name="accel">Aceleración %1$d  (200–1000)</string>
     <string name="track_auto">Iniciar el seguimiento automáticamente al abrir la app (en cuanto se conecte el gimbal)</string>
+    <string name="keep_tilt">Mantener la inclinación: tras iniciar y tras detener el seguimiento, volver a la inclinación anterior</string>
     <string name="angle_hint">El ángulo se aplica en ± alrededor de la dirección de la cámara al iniciar el seguimiento: apunta a la línea central y activa el seguimiento.</string>
     <string name="rtmp_url">URL RTMP</string>
     <string name="save">Guardar</string>
@@ -99,6 +100,9 @@
     <string name="video_section">Vídeo (stream + grabación)</string>
     <string name="audio">Audio</string>
     <string name="preview_chip">Vista previa en el navegador: %1$s</string>
+    <string name="camera_chip">Cámara: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">El zoom recorta la imagen del sensor antes de escalar (sin pérdida hasta unos 2× en 1080p). El gimbal sigue con su propia cámara y no lo ve.</string>
     <string name="phone_section">Teléfono</string>
     <string name="display_label">Pantalla</string>
     <string name="scr_on">mantener encendida</string>

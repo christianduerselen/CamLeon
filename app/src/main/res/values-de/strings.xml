@@ -83,6 +83,7 @@
     <string name="rot_angle">Kameradrehwinkel %1$d°  (60–150)</string>
     <string name="accel">Beschleunigung %1$d  (200–1000)</string>
     <string name="track_auto">Tracking beim App-Start automatisch starten (sobald der Gimbal verbunden ist)</string>
+    <string name="keep_tilt">Neigung beibehalten: nach Tracking-Start und nach dem Stopp zur vorherigen Neigung zurück</string>
     <string name="angle_hint">Der Winkel gilt ± um die Richtung, in die die Kamera beim Tracking-Start zeigt: auf die Mittellinie zielen, dann Tracking einschalten.</string>
     <string name="rtmp_url">RTMP-URL</string>
     <string name="save">Speichern</string>
@@ -92,6 +93,9 @@
     <string name="video_section">Video (Stream + Aufnahme)</string>
     <string name="audio">Audio</string>
     <string name="preview_chip">Browser-Vorschau: %1$s</string>
+    <string name="camera_chip">Kamera: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">Zoom schneidet das Sensorbild vor der Skalierung zu (bis etwa 2× verlustfrei bei 1080p). Der Gimbal trackt mit eigener Kamera und sieht ihn nicht.</string>
     <string name="phone_section">Handy</string>
     <string name="display_label">Display</string>
     <string name="scr_on">an lassen</string>

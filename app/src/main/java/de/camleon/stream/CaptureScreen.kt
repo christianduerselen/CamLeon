@@ -444,6 +444,16 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
             val videoLockedBy = if (lk.streaming && lk.recording) stringResource(R.string.streaming) + " / " + stringResource(R.string.recording)
                 else if (lk.streaming) stringResource(R.string.streaming) else stringResource(R.string.recording)
             Header(stringResource(R.string.video_section), lk.video, videoLockedBy)
+            // Rear camera (only when the phone exposes more than one): field of view · megapixels
+            val cams = remember { CaptureSession.camera.backCameras() }
+            if (cams.size > 1) Box {
+                var cameraMenu by remember { mutableStateOf(false) }
+                val cur = cams.firstOrNull { it.id == s.cameraId } ?: cams.firstOrNull { it.id == CaptureSession.camera.currentCameraId() }
+                FilterChip(selected = true, enabled = !lk.video, onClick = { cameraMenu = true }, label = { Text(stringResource(R.string.camera_chip, cur?.label ?: "—")) })
+                DropdownMenu(expanded = cameraMenu, onDismissRequest = { cameraMenu = false }) {
+                    cams.forEach { c -> DropdownMenuItem(text = { Text(c.label) }, onClick = { onChange(s.copy(cameraId = c.id)); cameraMenu = false }) }
+                }
+            }
             Box {
                 FilterChip(selected = true, enabled = !lk.video, onClick = { qualityMenu = true }, label = { Text(s.quality.label) })
                 DropdownMenu(expanded = qualityMenu, onDismissRequest = { qualityMenu = false }) {
@@ -453,6 +463,13 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
                 }
             }
             ToggleRow(stringResource(R.string.audio), s.audioEnabled, enabled = !lk.video) { onChange(s.copy(audioEnabled = it)) }
+            // Zoom = sensor crop, live, never locked (keeps the capture format)
+            val cam = CaptureSession.camera.currentCamera()
+            if (cam != null && cam.maxZoom > cam.minZoom) {
+                Text(stringResource(R.string.zoom_label, String.format(java.util.Locale.ROOT, "%.1f", s.zoom)), style = MaterialTheme.typography.bodyMedium)
+                Slider(value = s.zoom.coerceIn(cam.minZoom, cam.maxZoom), onValueChange = { onChange(s.copy(zoom = Math.round(it * 10) / 10f)) }, valueRange = cam.minZoom..cam.maxZoom)
+                Text(stringResource(R.string.zoom_hint), style = MaterialTheme.typography.bodySmall, color = dim)
+            }
             // Browser preview cap: independent of the encoder, so never locked
             Box {
                 FilterChip(selected = true, onClick = { previewMenu = true }, label = { Text(stringResource(R.string.preview_chip, s.previewQuality.label)) })
@@ -501,6 +518,7 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
                 Slider(value = s.tracking.acceleration.toFloat(), onValueChange = { onChange(s.copy(tracking = s.tracking.copy(acceleration = (it / 50).toInt() * 50))) }, valueRange = 200f..1000f, steps = 15, enabled = !lk.tracking)
             }
             ToggleRow(stringResource(R.string.track_auto), s.trackingAutoStart, enabled = !lk.tracking) { onChange(s.copy(trackingAutoStart = it)) }
+            ToggleRow(stringResource(R.string.keep_tilt), s.tracking.keepTilt) { onChange(s.copy(tracking = s.tracking.copy(keepTilt = it))) }   // never locked
             Text(stringResource(R.string.angle_hint), style = MaterialTheme.typography.bodySmall, color = dim)
             HorizontalDivider()
 

@@ -163,12 +163,21 @@
     <div class="grid">
       <div>
         <h2><span data-i18n="video">Video · stream + recording</span> <span id="lkVideo" class="mut"></span></h2>
+        <div id="cameraRow" style="display:none">
+          <label data-i18n="camera">Camera</label>
+          <select id="camera" onchange="setSetting({camera:this.value})"></select>
+        </div>
         <label data-i18n="quality">Quality</label>
         <select id="quality" onchange="setSetting({quality:this.value})"></select>
         <div id="fpsnote" class="mut" style="margin:4px 0"></div>
         <label data-i18n="previewQuality">Browser preview (per viewer, 30 fps)</label>
         <select id="previewQuality" onchange="setSetting({previewQuality:this.value})"></select>
         <div class="chk"><input type="checkbox" id="audio" onchange="setSetting({audio:this.checked})"><span data-i18n="audio">Audio</span></div>
+        <div id="zoomRow" style="display:none">
+          <label><span data-i18n="zoom">Zoom</span> <span id="zoomV">1.0</span>×</label>
+          <input type="range" id="zoom" min="1" max="2" step="0.1" oninput="zoomV.textContent=Number(this.value).toFixed(1); zoomLive(this.value)" onchange="setSetting({zoom:this.value})" style="width:100%">
+          <div class="mut" style="margin:4px 0" data-i18n="zoomHint">Zoom crops the sensor image before scaling (lossless up to about 2× at 1080p). The gimbal tracks with its own camera and does not see it.</div>
+        </div>
 
         <h2 style="margin-top:16px"><span data-i18n="tracking">Tracking</span> <span id="lkTracking" class="mut"></span></h2>
         <label data-i18n="sport">Sport</label>
@@ -185,6 +194,7 @@
         <label><span data-i18n="accel">Acceleration</span> <span id="accelV"></span> (200–1000)</label>
         <input type="range" id="accel" min="200" max="1000" step="50" oninput="accelV.textContent=this.value" onchange="setSetting({acceleration:this.value})" style="width:100%">
         <div class="chk"><input type="checkbox" id="trackAuto" onchange="setSetting({trackingAutoStart:this.checked})"><span data-i18n="trackAuto">Start tracking automatically at app start (once the gimbal connects)</span></div>
+        <div class="chk"><input type="checkbox" id="keepTilt" onchange="setSetting({keepTilt:this.checked})"><span data-i18n="keepTilt">Keep the tilt: after tracking starts and after it stops, tilt back to where it was</span></div>
         <div class="mut" data-i18n="angleHint">The angle is ± around the direction the camera faces when tracking starts: aim at the centre line, then switch tracking on.</div>
 
 
@@ -261,6 +271,10 @@ let lang = CamLeonI18N.lang;
 function applyLang() { lang = CamLeonI18N.lang; CamLeonI18N.apply(document); }
 CamLeonI18N.mount($('langSel'), () => { modesSig = ''; applyLang(); refresh(); });
 applyLang();
+
+// zoom slider: apply while dragging (debounced), the final value goes out on change
+let zoomTimer = null;
+function zoomLive(v) { clearTimeout(zoomTimer); zoomTimer = setTimeout(() => { zoomTimer = null; setSetting({ zoom: v }); }, 150); }
 
 async function api(path, method='GET') {
   const r = await fetch(path, { method });
@@ -380,7 +394,16 @@ async function refresh() {
     $('fpsnote').textContent = (pv.cameraMaxFps && pv.requestedFps > pv.cameraMaxFps)
       ? `${t('cameraMax')} ${pv.cameraMaxFps} ${t('fpsStreaming')} ${pv.capture}`
       : (pv.capture ? `${t('cameraCapture')} ${pv.capture}` : '');
-    fillModeSelects(cfg.tracking, s.modes || []); $('trackAuto').checked = !!cfg.trackingAutoStart;
+    // rear camera (only when the phone exposes several) + zoom range of the camera in use
+    const cams = pv.cameras || [], csel = $('camera');
+    $('cameraRow').style.display = cams.length > 1 ? '' : 'none';
+    if (cams.length && csel.options.length !== cams.length) csel.innerHTML = cams.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+    csel.value = cfg.cameraId || pv.camera || '';
+    const zs = $('zoom'), zmin = pv.minZoom || 1, zmax = pv.maxZoom || 1;
+    $('zoomRow').style.display = zmax > zmin ? '' : 'none';
+    zs.min = zmin; zs.max = zmax;
+    if (focused() !== 'zoom' && !zoomTimer) { zs.value = cfg.zoom || 1; $('zoomV').textContent = Number(zs.value).toFixed(1); }
+    fillModeSelects(cfg.tracking, s.modes || []); $('trackAuto').checked = !!cfg.trackingAutoStart; $('keepTilt').checked = cfg.tracking.keepTilt !== false;
     // per-function locks (server decides; the UI mirrors it) — padlock icon, title explains
     const LK = s.locks || {};
     const lockText = (on) => on ? String.fromCodePoint(0x1F512) : '';
@@ -392,7 +415,7 @@ async function refresh() {
     ['tSport', 'tVariant', 'tAge', 'yawRange', 'accel', 'trackAuto'].forEach(id => $(id).disabled = !!LK.tracking);
     ['url', 'streamAuto'].forEach(id => $(id).disabled = !!LK.streaming);
     $('recAuto').disabled = !!LK.recording;
-    ['quality', 'audio'].forEach(id => $(id).disabled = !!LK.video);
+    ['quality', 'audio', 'camera'].forEach(id => $(id).disabled = !!LK.video);
     if (focused() !== 'yawRange') { $('yawRange').value = cfg.tracking.yawRange; $('yawRangeV').textContent = cfg.tracking.yawRange; }
     if (focused() !== 'accel') { $('accel').value = cfg.tracking.acceleration; $('accelV').textContent = cfg.tracking.acceleration; }
   } catch (e) { console.warn('refresh failed', e); /* keep last known */ }

@@ -90,6 +90,7 @@
     <string name="rot_angle">Kąt obrotu kamery %1$d°  (60–150)</string>
     <string name="accel">Przyspieszenie %1$d  (200–1000)</string>
     <string name="track_auto">Uruchamiaj śledzenie automatycznie przy starcie aplikacji (gdy gimbal się połączy)</string>
+    <string name="keep_tilt">Zachowaj pochylenie: po starcie i po zatrzymaniu śledzenia wróć do poprzedniego pochylenia</string>
     <string name="angle_hint">Kąt działa ± wokół kierunku kamery przy starcie śledzenia: wyceluj w linię środkową, potem włącz śledzenie.</string>
     <string name="rtmp_url">Adres RTMP</string>
     <string name="save">Zapisz</string>
@@ -99,6 +100,9 @@
     <string name="video_section">Wideo (stream + nagrywanie)</string>
     <string name="audio">Dźwięk</string>
     <string name="preview_chip">Podgląd w przeglądarce: %1$s</string>
+    <string name="camera_chip">Kamera: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">Zoom przycina obraz z sensora przed skalowaniem (bez strat do około 2× przy 1080p). Gimbal śledzi własną kamerą i go nie widzi.</string>
     <string name="phone_section">Telefon</string>
     <string name="display_label">Ekran</string>
     <string name="scr_on">nie wygaszaj</string>

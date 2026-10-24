@@ -90,6 +90,7 @@
     <string name="rot_angle">Camera-draaihoek %1$d°  (60–150)</string>
     <string name="accel">Versnelling %1$d  (200–1000)</string>
     <string name="track_auto">Tracking automatisch starten bij het openen van de app (zodra de gimbal verbonden is)</string>
+    <string name="keep_tilt">Kanteling behouden: na de start en na het stoppen van tracking terug naar de vorige kanteling</string>
     <string name="angle_hint">De hoek geldt ± rond de richting waarin de camera bij de trackingstart kijkt: richt op de middenlijn en schakel dan tracking in.</string>
     <string name="rtmp_url">RTMP-URL</string>
     <string name="save">Opslaan</string>
@@ -99,6 +100,9 @@
     <string name="video_section">Video (stream + opname)</string>
     <string name="audio">Audio</string>
     <string name="preview_chip">Browserweergave: %1$s</string>
+    <string name="camera_chip">Camera: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">Zoom snijdt het sensorbeeld bij vóór het schalen (verliesvrij tot ongeveer 2× bij 1080p). De gimbal trackt met zijn eigen camera en ziet de zoom niet.</string>
     <string name="phone_section">Telefoon</string>
     <string name="display_label">Scherm</string>
     <string name="scr_on">aan laten</string>

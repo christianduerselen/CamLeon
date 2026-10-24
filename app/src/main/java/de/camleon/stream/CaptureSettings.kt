@@ -23,6 +23,10 @@ data class CaptureSettings(
     val audioEnabled: Boolean = true,
     // --- Browser preview (WebRTC): cap per viewer, independent of the stream/recording encoder
     val previewQuality: PreviewQuality = PreviewQuality.P540,
+    // --- Camera: Camera2 id of the rear camera ("" = the phone's default) and zoom = sensor crop
+    //     (1.0 = full sensor); the camera is locked with the video group, the zoom applies live
+    val cameraId: String = "",
+    val zoom: Float = 1f,
     // --- Phone display while capturing (24/7 use: the foreground service keeps camera/stream alive
     //     with the screen off, so the display can be dimmed or allowed to time out)
     val screenMode: ScreenMode = ScreenMode.ON,
@@ -62,6 +66,8 @@ data class CaptureSettings(
         put("quality", quality.name)
         put("audioEnabled", audioEnabled)
         put("previewQuality", previewQuality.name)
+        put("cameraId", cameraId)
+        put("zoom", zoom.toDouble())
         put("screenMode", screenMode.name)
         put("keepInBackground", keepInBackground)
         put("tracking", tracking.toJson())
@@ -76,6 +82,8 @@ data class CaptureSettings(
         quality = p["quality"]?.let { q -> Quality.entries.firstOrNull { it.name == q } } ?: quality,
         audioEnabled = (p["audio"] ?: p["audioEnabled"])?.toBooleanStrictOrNull() ?: audioEnabled,
         previewQuality = p["previewQuality"]?.let { q -> PreviewQuality.entries.firstOrNull { it.name.equals(q, true) } } ?: previewQuality,
+        cameraId = p["camera"] ?: p["cameraId"] ?: cameraId,
+        zoom = p["zoom"]?.toFloatOrNull() ?: zoom,
         screenMode = p["screenMode"]?.let { m -> ScreenMode.entries.firstOrNull { it.name.equals(m, true) } } ?: screenMode,
         keepInBackground = p["keepInBackground"]?.toBooleanStrictOrNull() ?: keepInBackground,
         tracking = tracking.applyParams(p),
@@ -93,6 +101,8 @@ data class CaptureSettings(
             quality = runCatching { Quality.valueOf(o.optString("quality", Quality.P720.name)) }.getOrDefault(Quality.P720),
             audioEnabled = o.optBoolean("audioEnabled", true),
             previewQuality = runCatching { PreviewQuality.valueOf(o.optString("previewQuality", PreviewQuality.P540.name)) }.getOrDefault(PreviewQuality.P540),
+            cameraId = o.optString("cameraId", ""),
+            zoom = o.optDouble("zoom", 1.0).toFloat(),
             screenMode = runCatching { ScreenMode.valueOf(o.optString("screenMode", ScreenMode.ON.name)) }.getOrDefault(ScreenMode.ON),
             keepInBackground = o.optBoolean("keepInBackground", false),
             tracking = o.optJSONObject("tracking")?.let { TrackingSettings.fromJson(it) } ?: TrackingSettings(),
@@ -125,6 +135,12 @@ data class TrackingSettings(
     val yawRange: Int = 85,
     /** Acceleration ("Beschleunigung") 200..1000 — 1st param of 0x72. Applies at tracking start. */
     val acceleration: Int = 1000,
+    /**
+     * Keep the tilt across tracking start/stop: the SDK tilts to its own constant at start and the
+     * gimbal returns to pitch 0 at stop — with this on, CamLeon drives the tilt back to where it was
+     * (before the start, and before the stop) afterwards. Not locked while tracking runs.
+     */
+    val keepTilt: Boolean = true,
 ) {
     /** Always a valid combination: unknown variant → the sport's first one; no age split → youth=false. */
     fun normalized(): TrackingSettings {
@@ -138,7 +154,7 @@ data class TrackingSettings(
 
     fun toJson(): JSONObject = JSONObject().apply {
         put("sport", sport.name); put("variant", variant); put("youth", youth); put("modeId", modeId())
-        put("yawRange", yawRange); put("acceleration", acceleration)
+        put("yawRange", yawRange); put("acceleration", acceleration); put("keepTilt", keepTilt)
     }
 
     fun applyParams(p: Map<String, String?>): TrackingSettings {
@@ -149,6 +165,7 @@ data class TrackingSettings(
             youth = p["youth"]?.toBooleanStrictOrNull() ?: youth,
             yawRange = p["yawRange"]?.toIntOrNull()?.coerceIn(60, 150) ?: yawRange,
             acceleration = p["acceleration"]?.toIntOrNull()?.coerceIn(200, 1000) ?: acceleration,
+            keepTilt = p["keepTilt"]?.toBooleanStrictOrNull() ?: keepTilt,
         ).normalized()
     }
 
@@ -159,6 +176,7 @@ data class TrackingSettings(
             youth = o.optBoolean("youth", false),
             yawRange = o.optInt("yawRange", 85).coerceIn(60, 150),
             acceleration = o.optInt("acceleration", 1000).coerceIn(200, 1000),
+            keepTilt = o.optBoolean("keepTilt", true),
         ).normalized()
     }
 }

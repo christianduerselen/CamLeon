@@ -90,6 +90,7 @@
     <string name="rot_angle">Camera rotation angle %1$d°  (60–150)</string>
     <string name="accel">Acceleration %1$d  (200–1000)</string>
     <string name="track_auto">Start tracking automatically at app start (once the gimbal connects)</string>
+    <string name="keep_tilt">Keep the tilt: after tracking starts and after it stops, tilt back to where it was</string>
     <string name="angle_hint">The angle is ± around the direction the camera faces when tracking starts: aim at the centre line, then switch tracking on.</string>
     <string name="rtmp_url">RTMP URL</string>
     <string name="save">Save</string>
@@ -99,6 +100,9 @@
     <string name="video_section">Video (stream + recording)</string>
     <string name="audio">Audio</string>
     <string name="preview_chip">Browser preview: %1$s</string>
+    <string name="camera_chip">Camera: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">Zoom crops the sensor image before scaling (lossless up to about 2× at 1080p). The gimbal tracks with its own camera and does not see it.</string>
     <string name="phone_section">Phone</string>
     <string name="display_label">Display</string>
     <string name="scr_on">keep on</string>

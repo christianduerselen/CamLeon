@@ -16,6 +16,11 @@ public class FpsCamera2Capturer extends Camera2Capturer {
     cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
   }
 
+  /** Zoom (sensor crop) for the running and every future session; see FpsCamera2Session.applyZoom. */
+  public static void setZoom(float ratio) {
+    FpsCamera2Session.setZoom(ratio);
+  }
+
   /** Upper bound (fps) of the AE range the camera currently runs with; 0 = not started yet. */
   public static int activeMaxFps() {
     return FpsCamera2Session.activeMaxFps;

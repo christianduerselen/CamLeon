@@ -90,6 +90,7 @@
     <string name="rot_angle">Kamera dönüş açısı %1$d°  (60–150)</string>
     <string name="accel">İvme %1$d  (200–1000)</string>
     <string name="track_auto">Uygulama açılınca takibi otomatik başlat (gimbal bağlanır bağlanmaz)</string>
+    <string name="keep_tilt">Eğimi koru: takip başladıktan ve durduktan sonra önceki eğime geri dön</string>
     <string name="angle_hint">Açı, takip başladığında kameranın baktığı yönün ± etrafında geçerlidir: orta çizgiye nişan alın, sonra takibi açın.</string>
     <string name="rtmp_url">RTMP adresi</string>
     <string name="save">Kaydet</string>
@@ -99,6 +100,9 @@
     <string name="video_section">Video (yayın + kayıt)</string>
     <string name="audio">Ses</string>
     <string name="preview_chip">Tarayıcı önizlemesi: %1$s</string>
+    <string name="camera_chip">Kamera: %1$s</string>
+    <string name="zoom_label">Zoom %1$s×</string>
+    <string name="zoom_hint">Zoom, sensör görüntüsünü ölçeklemeden önce kırpar (1080p\'de yaklaşık 2×\'e kadar kayıpsız). Gimbal kendi kamerasıyla takip eder ve zoomu görmez.</string>
     <string name="phone_section">Telefon</string>
     <string name="display_label">Ekran</string>
     <string name="scr_on">açık tut</string>

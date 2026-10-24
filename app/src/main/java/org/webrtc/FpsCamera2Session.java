@@ -27,6 +27,8 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
+import android.os.Build;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.util.Range;
 import android.view.Surface;
@@ -41,6 +43,9 @@ class FpsCamera2Session implements CameraSession {
 
   /** Upper bound (fps) of the AE range the most recent session runs with; 0 = none yet. */
   static volatile int activeMaxFps = 0;
+  /** CamLeon: zoom (sensor crop before scaling) requested for the running and every future session. */
+  static volatile float zoomRatio = 1f;
+  @Nullable private static volatile FpsCamera2Session active;
 
   private static final Histogram camera2StartTimeMsHistogram =
       Histogram.createCounts("WebRTC.Android.Camera2.StartTimeMs", 1, 10000, 50);
@@ -75,6 +80,7 @@ class FpsCamera2Session implements CameraSession {
 
   // Initialized when capture session is created
   @Nullable private CameraCaptureSession captureSession;
+  @Nullable private CaptureRequest.Builder requestBuilder;
 
   // State
   private SessionState state = SessionState.RUNNING;
@@ -180,8 +186,11 @@ class FpsCamera2Session implements CameraSession {
         captureRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, false);
         chooseStabilizationMode(captureRequestBuilder);
         chooseFocusMode(captureRequestBuilder);
+        applyZoom(captureRequestBuilder);
 
         captureRequestBuilder.addTarget(surface);
+        requestBuilder = captureRequestBuilder;
+        active = FpsCamera2Session.this;
         session.setRepeatingRequest(
             captureRequestBuilder.build(), new CameraCaptureCallback(), cameraThreadHandler);
       } catch (CameraAccessException e) {
@@ -268,6 +277,51 @@ class FpsCamera2Session implements CameraSession {
       }
       Logging.d(TAG, "Auto-focus is not available.");
     }
+  }
+
+  // ---- CamLeon: zoom -------------------------------------------------------------------------
+
+  /** Set the zoom for the running session (re-issues the repeating request) and for future ones. */
+  static void setZoom(float ratio) {
+    zoomRatio = ratio;
+    final FpsCamera2Session s = active;
+    if (s != null) s.cameraThreadHandler.post(s::reapplyRequest);
+  }
+
+  private void reapplyRequest() {
+    checkIsOnCameraThread();
+    if (state != SessionState.RUNNING || captureSession == null || requestBuilder == null) return;
+    try {
+      applyZoom(requestBuilder);
+      captureSession.setRepeatingRequest(
+          requestBuilder.build(), new CameraCaptureCallback(), cameraThreadHandler);
+    } catch (CameraAccessException | IllegalStateException e) {
+      Logging.w(TAG, "zoom: setRepeatingRequest failed: " + e);
+    }
+  }
+
+  /**
+   * Zoom = crop of the sensor image before it is scaled to the capture size, so up to the point where
+   * the crop still has more pixels than the output it costs no detail. API 30+ uses CONTROL_ZOOM_RATIO
+   * (a logical multi-camera may then also offer ratios below 1 = its wide lens); older devices get
+   * the equivalent centred SCALER_CROP_REGION.
+   */
+  private void applyZoom(CaptureRequest.Builder b) {
+    float z = zoomRatio;
+    if (Build.VERSION.SDK_INT >= 30) {
+      Range<Float> r = cameraCharacteristics.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+      if (r != null) {
+        b.set(CaptureRequest.CONTROL_ZOOM_RATIO, Math.max(r.getLower(), Math.min(r.getUpper(), z)));
+        return;
+      }
+    }
+    Rect arr = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+    Float max = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+    if (arr == null) return;
+    z = Math.max(1f, Math.min(max == null ? 1f : max, z));
+    int w = Math.round(arr.width() / z), h = Math.round(arr.height() / z);
+    int x = arr.left + (arr.width() - w) / 2, y = arr.top + (arr.height() - h) / 2;
+    b.set(CaptureRequest.SCALER_CROP_REGION, new Rect(x, y, x + w, y + h));
   }
 
   private static class CameraCaptureCallback extends CameraCaptureSession.CaptureCallback {
@@ -399,6 +453,8 @@ class FpsCamera2Session implements CameraSession {
     checkIsOnCameraThread();
 
     surfaceTextureHelper.stopListening();
+    if (active == this) active = null;
+    requestBuilder = null;
 
     if (captureSession != null) {
       captureSession.close();

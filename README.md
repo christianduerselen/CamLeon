@@ -11,6 +11,9 @@ streaming and local recording, plus a browser control page with live preview in 
 - Tracking runs on the gimbal itself; the app talks to it over BLE (protocol: [docs/ble-protocol.md](docs/ble-protocol.md)).
 - The app remembers the gimbal and reconnects to it on its own, also with the screen off. Searching for a
   new gimbal needs the screen on (Android allows no unfiltered Bluetooth scan in screen-off); the app says so.
+- Camera: the rear camera is selectable when the phone exposes several to apps (labelled by field of
+  view and megapixels), and a zoom crops the sensor image before scaling — live, for stream, recording
+  and preview alike, lossless up to about 2× at 1080p. The gimbal tracks with its own camera.
 - Streaming/recording: RootEncoder (H.264/AAC), one encoder shared by stream and recording.
   Preview to the browser: WebRTC at 30 fps, resolution/bitrate per the "Browser preview" setting
   (360p · 0.8 Mbps … 1080p · 4 Mbps, default 540p · 1.5 Mbps; never above the capture resolution;
@@ -145,7 +148,7 @@ POST /api/tracking?on=true|false
 POST /api/streaming?on=true|false
 POST /api/recording?on=true|false
 GET  /api/status
-POST /api/settings?quality=P1080&audio=true&previewQuality=P540&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=85&acceleration=1000&screenMode=ON&keepInBackground=false
+POST /api/settings?quality=P1080&audio=true&previewQuality=P540&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=85&acceleration=1000&screenMode=ON&keepInBackground=false&camera=<id>&zoom=1.5&keepTilt=true
 POST /api/gimbal/move?yaw=-100..100&pitch=-100..100      POST /api/gimbal/stop
 POST /api/gimbal/home?axis=yaw|pitch                     POST /api/gimbal/home/cancel
 GET  /api/snapshot.jpg                                    (current camera frame at capture resolution)

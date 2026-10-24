@@ -21,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -81,7 +82,10 @@ object CaptureSession {
         camera = WebRtcCamera(appContext)
         // Only offer what this phone's camera can really deliver; a saved quality that is not
         // supported here (e.g. after moving to another phone) falls back to the best supported one.
-        _settings.value = CaptureSettings.load(appContext).let { it.copy(quality = coerceQuality(it.quality)) }
+        // Same for the camera id (another phone has other ids) and the zoom (clamped to the camera's range).
+        val loaded = CaptureSettings.load(appContext)
+        val camId = camera.selectCamera(loaded.cameraId)
+        _settings.value = loaded.copy(cameraId = camId, quality = coerceQuality(loaded.quality), zoom = camera.setZoom(loaded.zoom))
             .also { CaptureSettings.save(appContext, it) }
         camera.setPreviewLimits(_settings.value.previewQuality.height, _settings.value.previewQuality.bitrateBps)
         media = MediaPipeline(appContext, WebRtcVideoSource(camera)).also { it.updateSettings(_settings.value) }
@@ -158,8 +162,9 @@ object CaptureSession {
      *    takes 0x72 parameters only before SDK start (no ack/log for a live 0x72),
      *  - streaming (RTMP URL, auto-start) while streaming,
      *  - recording (auto-start) while recording,
-     *  - video     (quality, audio) while streaming OR recording — the encoder cannot be re-prepared mid-run.
-     *  The browser preview quality is never locked: it only changes the per-viewer WebRTC encoders.
+     *  - video     (camera, quality, audio) while streaming OR recording — the encoder cannot be re-prepared mid-run.
+     *  The browser preview quality and the zoom are never locked: the preview only changes the per-viewer
+     *  WebRTC encoders, the zoom is a crop inside the camera and keeps the capture format.
      * Locked groups keep their old values no matter where the change comes from (phone, web, API).
      */
     data class Locks(val tracking: Boolean, val streaming: Boolean, val recording: Boolean) {
@@ -176,14 +181,17 @@ object CaptureSession {
     fun updateSettings(new0: CaptureSettings) {
         val old = _settings.value
         val lk = locks()
+        val camId = if (lk.video || new0.cameraId == old.cameraId) old.cameraId else camera.selectCamera(new0.cameraId)   // before coerceQuality: the new camera's formats count
         val new = new0.copy(
+            cameraId = camId,
+            zoom = camera.setZoom(new0.zoom),
             quality = if (lk.video) old.quality else coerceQuality(new0.quality),
             audioEnabled = if (lk.video) old.audioEnabled else new0.audioEnabled,
             rtmpUrl = if (lk.streaming) old.rtmpUrl else new0.rtmpUrl,
             streamAutoStart = if (lk.streaming) old.streamAutoStart else new0.streamAutoStart,
             recordAutoStart = if (lk.recording) old.recordAutoStart else new0.recordAutoStart,
             trackingAutoStart = if (lk.tracking) old.trackingAutoStart else new0.trackingAutoStart,
-            tracking = if (lk.tracking) old.tracking else new0.tracking,
+            tracking = if (lk.tracking) old.tracking.copy(keepTilt = new0.tracking.keepTilt) else new0.tracking,   // keepTilt is never locked
         )
         val modeChanged = new.tracking.modeId() != old.tracking.modeId()
         _settings.value = new
@@ -205,8 +213,8 @@ object CaptureSession {
     fun shutdown(done: () -> Unit) {
         scope.launch {
             runCatching {
-                homeJob?.cancel(); moveJob?.cancel(); trackingJob?.cancel()
-                if (gimbalReady() && (_tracking.value || gimbalTrackingActive)) { setTracking(false); delay(400) }
+                homeJob?.cancel(); tiltJob?.cancel(); homing = false; moveJob?.cancel(); trackingJob?.cancel()
+                if (gimbalReady() && (_tracking.value || gimbalTrackingActive)) { setTracking(false, restoreTilt = false); delay(400) }
                 else if (gimbalReady() && (manualYaw != 0 || manualPitch != 0)) { stopMove(); delay(300) }
                 media.stopRecording()
                 media.stopStreaming()
@@ -286,13 +294,26 @@ object CaptureSession {
      * required gaps (≈0.4 s / 0.35 s)** — sent back to back the gimbal ignores the start (verified live).
      * OFF: SDKStop.
      */
-    fun setTracking(on: Boolean): Boolean {
+    fun setTracking(on: Boolean): Boolean = setTracking(on, restoreTilt = true)
+
+    private fun setTracking(on: Boolean, restoreTilt: Boolean): Boolean {
         _tracking.value = on
         if (!gimbalReady()) { trackingNote = "gimbal not connected — tracking will apply once connected"; return false }
         trackingNote = null
         trackingJob?.cancel()
+        cancelTiltRestore()
         val t = _settings.value.tracking
-        if (!on) { lastSdkStopAt = System.currentTimeMillis(); centreOk = null; return ble.sendRaw(GimbalCommands.trackSwitch(false), "trackSwitch(off)") }
+        if (!on) {
+            // The gimbal drives back to yaw 0 / pitch 0 after SDKStop; with keepTilt the tilt in use right
+            // now (possibly nudged during the game) is driven back afterwards.
+            val tiltBefore = _gimbalPitch.value
+            lastSdkStopAt = System.currentTimeMillis(); centreOk = null
+            val ok = ble.sendRaw(GimbalCommands.trackSwitch(false), "trackSwitch(off)")
+            if (ok && restoreTilt && t.keepTilt && tiltBefore != null && kotlin.math.abs(tiltBefore) > TILT_TOLERANCE) {
+                tiltJob = scope.launch { delay(1500); waitUntilStill(4000); driveTiltTo(tiltBefore, "after stop") }
+            }
+            return ok
+        }
         val yawLim = t.yawRange
         val accel = t.acceleration
         val mode = modeId()
@@ -307,14 +328,64 @@ object CaptureSession {
             if (sinceStop < 3000) { trackingNote = "waiting for the gimbal to settle…"; delay(3000 - sinceStop) }
             waitUntilStill(3000)
             trackingNote = null
+            val tiltBefore = _gimbalPitch.value   // the SDK tilts to its own constant at start (pitchInit)
             rebasePending = true; centreOk = null
             ble.sendRaw(GimbalCommands.chooseMode(mode), "chooseMode($mode)"); delay(400)
             ble.sendRaw(GimbalCommands.setParams(yawLim, accel), "setParams(yawRange=$yawLim, accel=$accel)"); delay(350)
             ble.sendRaw(GimbalCommands.trackSwitch(true), "trackSwitch(on)")
             delay(3000)
             if (_tracking.value && !gimbalTrackingActive) trackingNote = "gimbal did not confirm SDK start — try again"
+            else if (t.keepTilt && tiltBefore != null && kotlin.math.abs(tiltBefore - (_gimbalPitch.value ?: tiltBefore)) > TILT_TOLERANCE) {
+                waitUntilStill(3000)   // let the SDK finish its own tilt move first
+                driveTiltTo(tiltBefore, "after start")
+            }
         }
         return true
+    }
+
+    // ---- tilt memory across tracking start/stop ------------------------------------------------
+
+    private var tiltJob: Job? = null
+    /** Last time a pitch value arrived (0x42 stream or SDK log line); the tilt loop stops when it goes stale. */
+    @Volatile private var pitchUpdatedAt = 0L
+
+    private fun cancelTiltRestore() {
+        tiltJob?.let { j -> if (j.isActive) { j.cancel(); homing = false; repeat(2) { ble.sendRaw(GimbalCommands.stop(GimbalCommands.AXIS_PITCH), "tilt restore cancelled") } } }
+        tiltJob = null
+    }
+
+    /**
+     * Feedback loop like [goHome], pitch only, to an arbitrary target in the reporting frame (the pitch
+     * frame is not re-based by the SDK, so the value read before start/stop is valid afterwards).
+     * Blocks the pad like a drive to 0° (Cancel stops it); gives up after 10 s or when no pitch
+     * telemetry arrives for 1.5 s (some SDK log formats carry no angles).
+     */
+    private suspend fun driveTiltTo(target: Double, why: String) {
+        if (!gimbalReady() || homing) return
+        homing = true
+        gimbalNote = "tilt → ${"%.1f".format(target)}°"
+        ProtocolLog.event("tilt restore ($why): ${"%.1f".format(_gimbalPitch.value ?: 0.0)}° → ${"%.1f".format(target)}°")
+        try {
+            val t0 = System.currentTimeMillis()
+            var settled = 0
+            while (currentCoroutineContext().isActive && System.currentTimeMillis() - t0 < 10_000) {
+                if (System.currentTimeMillis() - pitchUpdatedAt > 1500) { ProtocolLog.event("tilt restore: no pitch telemetry — giving up"); break }
+                val pitch = _gimbalPitch.value ?: break
+                val err = target - pitch
+                if (kotlin.math.abs(err) <= TILT_TOLERANCE) { ble.sendRaw(GimbalCommands.stop(GimbalCommands.AXIS_PITCH), "tilt stop"); if (++settled >= 3) break }
+                else {
+                    settled = 0
+                    val sp = (kotlin.math.abs(err) * 2.5).toInt().coerceIn(12, 60)
+                    ble.sendRaw(GimbalCommands.move(GimbalCommands.AXIS_PITCH, if (err > 0) sp else -sp), "tilt restore")
+                }
+                delay(100)
+            }
+        } finally {
+            repeat(2) { ble.sendRaw(GimbalCommands.stop(GimbalCommands.AXIS_PITCH), "tilt restore done"); delay(60) }
+            homing = false
+            if (gimbalNote?.startsWith("tilt →") == true) gimbalNote = null
+            ProtocolLog.event("tilt restore finished at pitch=${"%.1f".format(_gimbalPitch.value ?: 0.0)}°")
+        }
     }
 
     // ---- gimbal: manual control (setup + tracking override) ----------------------------------------
@@ -345,6 +416,8 @@ object CaptureSession {
         return false
     }
     private const val KEEP_ALIVE_MS = 800L
+    /** Tilt restore target window in degrees (same as the drive-to-0° loop). */
+    private const val TILT_TOLERANCE = 0.6
 
     /**
      * Callers (web pad, phone pad) call this repeatedly (~every 300 ms) while a button is held — a
@@ -448,7 +521,7 @@ object CaptureSession {
         }
         return true
     }
-    fun cancelHome() { homeJob?.cancel(); homing = false; stopMove() }
+    fun cancelHome() { homeJob?.cancel(); cancelTiltRestore(); homing = false; stopMove() }
 
     /** RX: 0x42 yaw/pitch (int16 LE, 1/100°), 0x46 ack [mode, capture, track], 0x67 battery, 0x66 external power. */
     private fun onGimbalFrame(f: ChameleonFrame.Parsed) {
@@ -458,6 +531,7 @@ object CaptureSession {
             0x42 -> if (p.size >= 4) {
                 _gimbalYaw.value = ((p[0].toInt() and 0xFF) or (p[1].toInt() shl 8)).toShort().toInt() / 100.0
                 _gimbalPitch.value = ((p[2].toInt() and 0xFF) or (p[3].toInt() shl 8)).toShort().toInt() / 100.0
+                pitchUpdatedAt = System.currentTimeMillis()
             }
             0x46 -> if (p.size >= 3) {
                 gimbalAck = Triple(p[0].toInt() and 0xFF, p[1].toInt() and 0xFF, p[2].toInt() and 0xFF)
@@ -473,6 +547,7 @@ object CaptureSession {
                 val m = SDK_ANGLE.find(String(p, Charsets.US_ASCII)) ?: return
                 _gimbalYaw.value = m.groupValues[1].toDoubleOrNull() ?: return
                 _gimbalPitch.value = m.groupValues[2].toDoubleOrNull() ?: return
+                pitchUpdatedAt = System.currentTimeMillis()
                 angleSource = "sdk log"
                 if (rebasePending && gimbalTrackingActive) {
                     // First SDK yaw after start: ~0 means the gimbal took the current direction as its
@@ -550,6 +625,9 @@ object CaptureSession {
             put("modes", de.camleon.stream.ChameleonModes.toJson())
             put("preview", JSONObject().apply { put("cameraStarted", camera.started); put("cameraLost", camera.lost); put("viewers", camera.viewerCount())
                 put("capture", "${camera.width}x${camera.height}@${camera.effectiveFps()}"); put("requestedFps", camera.fps); put("cameraMaxFps", camera.maxFpsFor(camera.width, camera.height));
+                put("cameras", org.json.JSONArray().apply { camera.backCameras().forEach { c -> put(JSONObject().put("id", c.id).put("label", c.label).put("fov", c.fovDeg).put("mp", c.megapixels)) } })
+                put("camera", camera.currentCameraId() ?: ""); put("zoom", camera.zoom.toDouble())
+                camera.currentCamera()?.let { put("minZoom", Math.round(it.minZoom * 10) / 10.0); put("maxZoom", Math.round(it.maxZoom * 10) / 10.0) }   // 0.6, not 0.6000000238
                 put("supportedQualities", org.json.JSONArray().apply { supportedQualities().forEach { q -> put(JSONObject().put("id", q.name).put("label", q.label)) } });
                 put("previewQualities", org.json.JSONArray().apply { CaptureSettings.PreviewQuality.entries.forEach { q -> put(JSONObject().put("id", q.name).put("label", q.label)) } }); camera.lastError?.let { put("error", it) } })
             put("settings", s.toJson())

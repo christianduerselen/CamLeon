@@ -71,7 +71,9 @@ class WebRtcCamera(private val context: Context) {
     private var outRenderer: EglRenderer? = null
     private var landscapeLock: LandscapeLock? = null
     @Volatile var started = false; private set
+    /** Camera2 id in use (or selected for the next start); null = default back camera. */
     @Volatile private var deviceName: String? = null
+    @Volatile var zoom = 1f; private set
     /** True after the camera was taken away (error / disconnect / freeze) until frames flow again. */
     @Volatile var lost = false; private set
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
@@ -123,6 +125,78 @@ class WebRtcCamera(private val context: Context) {
     }
     @Volatile var lastError: String? = null; private set
 
+    // ---- camera choice + zoom ---------------------------------------------------------------
+
+    /** A rear camera usable for video: horizontal field of view and sensor resolution make the label. */
+    data class CameraInfo(val id: String, val fovDeg: Int, val megapixels: Int, val minZoom: Float, val maxZoom: Float) {
+        val label get() = "$fovDeg° · $megapixels MP"
+    }
+
+    private val cameraManager get() = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+    /**
+     * Rear cameras the phone exposes to third-party apps (depth / auxiliary sensors without the
+     * backward-compatible capability are skipped). Phones that hide the extra lenses behind one logical
+     * camera list only that one; its zoom range may then reach below 1 for the wide lens.
+     */
+    fun backCameras(): List<CameraInfo> = cameraList
+    private val cameraList: List<CameraInfo> by lazy { queryBackCameras() }   // hardware list, queried once
+    private fun queryBackCameras(): List<CameraInfo> = runCatching {
+        val cm = cameraManager
+        cm.cameraIdList.mapNotNull { id ->
+            val c = cm.getCameraCharacteristics(id)
+            if (c.get(CameraCharacteristics.LENS_FACING) != CameraCharacteristics.LENS_FACING_BACK) return@mapNotNull null
+            val caps = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES) ?: intArrayOf()
+            if (CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE !in caps) return@mapNotNull null
+            val focal = c.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS)?.minOrNull() ?: return@mapNotNull null
+            val size = c.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE) ?: return@mapNotNull null
+            val px = c.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
+            val fov = Math.toDegrees(2.0 * Math.atan((size.width / (2.0 * focal)))).toInt()
+            val mp = if (px != null) Math.round(px.width.toLong() * px.height / 1_000_000.0).toInt() else 0
+            val range = if (android.os.Build.VERSION.SDK_INT >= 30) c.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE) else null
+            val maxDigital = c.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) ?: 1f
+            CameraInfo(id, fov, mp, range?.lower ?: 1f, minOf(range?.upper ?: maxDigital, MAX_ZOOM_OFFERED))
+        }.sortedByDescending { it.fovDeg }
+    }.getOrDefault(emptyList())
+
+    private fun defaultBackCamera(): String? = Camera2Enumerator(context).let { e -> e.deviceNames.firstOrNull { e.isBackFacing(it) } ?: e.deviceNames.firstOrNull() }
+
+    /** Camera id in use / selected; the phone's default back camera until one is chosen. */
+    fun currentCameraId(): String? = deviceName ?: defaultBackCamera()
+    fun currentCamera(): CameraInfo? = currentCameraId()?.let { id -> backCameras().firstOrNull { it.id == id } }
+
+    /**
+     * Use camera [id] ("" / unknown = the default back camera). Live switch while running: libwebrtc
+     * stops the session and reopens on the new camera with the same format request; the fan-out,
+     * viewers and encoder keep going, the picture pauses for well under a second.
+     * Returns the id that is now in effect ("" when falling back to the default).
+     */
+    @Synchronized
+    fun selectCamera(id: String): String {
+        val known = backCameras()
+        val target = known.firstOrNull { it.id == id }?.id ?: defaultBackCamera() ?: return ""
+        val effective = if (known.any { it.id == id }) id else ""
+        if (target == (deviceName ?: defaultBackCamera())) { deviceName = target; return effective }
+        deviceName = target
+        if (started) capturer?.switchCamera(object : CameraVideoCapturer.CameraSwitchHandler {
+            override fun onCameraSwitchDone(isFrontCamera: Boolean) { Log.i(TAG, "switched to camera $target") }
+            override fun onCameraSwitchError(e: String) { Log.w(TAG, "camera switch failed: $e"); markLost("camera switch failed: $e") }
+        }, target)
+        setZoom(zoom)   // clamp to the new camera's range
+        return effective
+    }
+
+    /** Zoom (sensor crop) for the running camera, clamped to its range; applies live, also to stream and recording. */
+    fun setZoom(ratio: Float): Float {
+        val cam = currentCamera()
+        val z = ratio.coerceIn(cam?.minZoom ?: 1f, cam?.maxZoom ?: 1f)
+        zoom = z
+        // FpsCamera2Session's class init creates native histograms: only touch it once libwebrtc's native
+        // library is loaded (start()); before that the value is applied at start.
+        if (started) FpsCamera2Capturer.setZoom(z)
+        return z
+    }
+
     @Synchronized
     fun start(): Boolean {
         if (started) return true
@@ -136,12 +210,11 @@ class WebRtcCamera(private val context: Context) {
                 .setVideoEncoderFactory(DefaultVideoEncoderFactory(eglBase.eglBaseContext, true, true))
                 .setVideoDecoderFactory(DefaultVideoDecoderFactory(eglBase.eglBaseContext))
                 .createPeerConnectionFactory()
-            val enumerator = Camera2Enumerator(context)
-            val name = enumerator.deviceNames.firstOrNull { enumerator.isBackFacing(it) }
-                ?: enumerator.deviceNames.firstOrNull() ?: error("no camera")
+            val name = deviceName ?: defaultBackCamera() ?: error("no camera")
             deviceName = name
             // Own capturer: libwebrtc's range choice turns a 60 fps request into [10,30] on some phones.
             val cap: CameraVideoCapturer = FpsCamera2Capturer(context, name, cameraEvents)
+            FpsCamera2Capturer.setZoom(zoom)   // native library is loaded now; the session applies it on configure
             val h = SurfaceTextureHelper.create("CamCapture", eglBase.eglBaseContext)
             val src = factory.createVideoSource(cap.isScreencast)
             cap.initialize(h, context, LandscapeLock(src.capturerObserver).also { landscapeLock = it })
@@ -413,6 +486,8 @@ class WebRtcCamera(private val context: Context) {
 
     private companion object {
         const val TAG = "WebRtcCamera"
+        /** Digital zoom beyond this is interpolation only at 1080p; the slider stops here. */
+        const val MAX_ZOOM_OFFERED = 4f
         const val DISCONNECT_GRACE_MS = 10_000L
     }
 }
