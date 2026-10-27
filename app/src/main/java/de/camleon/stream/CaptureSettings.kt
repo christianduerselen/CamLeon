@@ -122,9 +122,9 @@ data class CaptureSettings(
 /**
  * Tracking configuration: sport/mode plus the gimbal's tracking parameters.
  *
- * Yaw 0° is the hardware zero = the direction the Chameleon faces when switched on; the camera
- * rotation angle is applied symmetrically around it. So: switch the gimbal on pointing at the court
- * centre (or drive it to 0° with "Go to 0°" and align the mount), then set the angle.
+ * Yaw 0° is the direction the gimbal faces when tracking starts (the gimbal re-bases its yaw zero
+ * at SDK start); the camera rotation angle is applied symmetrically around it. So: aim at the court
+ * centre, then start tracking. Defaults (120°, 800) follow the gimbal maker's basketball preset.
  */
 data class TrackingSettings(
     /** Sport + variant + age group → Chameleon mode id (see [ChameleonModes]). Default = mode 36. */
@@ -132,9 +132,9 @@ data class TrackingSettings(
     val variant: String = "full_high",
     val youth: Boolean = false,
     /** Camera rotation angle ("Kameradrehwinkel") 60..150 — 3rd param of 0x72, gimbal log "yawLim". Applies at tracking start. */
-    val yawRange: Int = 85,
+    val yawRange: Int = 120,
     /** Acceleration ("Beschleunigung") 200..1000 — 1st param of 0x72. Applies at tracking start. */
-    val acceleration: Int = 1000,
+    val acceleration: Int = 800,
     /**
      * Keep the tilt across tracking start/stop: the SDK tilts to its own constant at start and the
      * gimbal returns to pitch 0 at stop — with this on, CamLeon drives the tilt back to where it was
@@ -174,8 +174,8 @@ data class TrackingSettings(
             sport = runCatching { ChameleonModes.Sport.valueOf(o.optString("sport", "BASKETBALL")) }.getOrDefault(ChameleonModes.Sport.BASKETBALL),
             variant = o.optString("variant", "full_high"),
             youth = o.optBoolean("youth", false),
-            yawRange = o.optInt("yawRange", 85).coerceIn(60, 150),
-            acceleration = o.optInt("acceleration", 1000).coerceIn(200, 1000),
+            yawRange = o.optInt("yawRange", 120).coerceIn(60, 150),
+            acceleration = o.optInt("acceleration", 800).coerceIn(200, 1000),
             keepTilt = o.optBoolean("keepTilt", true),
         ).normalized()
     }

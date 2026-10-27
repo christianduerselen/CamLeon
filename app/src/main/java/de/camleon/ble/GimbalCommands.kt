@@ -46,7 +46,7 @@ object GimbalCommands {
      * Tracking parameters (0x72): (acceleration 200..1000, 0, camera rotation angle 60..150, 0).
      * Acceleration and camera rotation angle (gimbal log "yawLim"). Only applied at SDK start.
      */
-    fun setParams(yawRangeDeg: Int, acceleration: Int = 1000) =
+    fun setParams(yawRangeDeg: Int, acceleration: Int = 800) =
         ChameleonFrame.build(0x72, u16(acceleration.coerceIn(200, 1000)) + u16(0) + u16(yawRangeDeg.coerceIn(0, 180)) + u16(0))
     fun trackSwitch(on: Boolean) = ChameleonFrame.build(0x6F, byteArrayOf(if (on) 1 else 0))
 
