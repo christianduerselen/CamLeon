@@ -34,6 +34,9 @@ data class CaptureSettings(
     //     (orderly: recording finished, stream stopped, gimbal disconnected); true = only Quit ends it.
     //     The foreground service runs either way — it is what keeps the camera through a screen lock.
     val keepInBackground: Boolean = false,
+    // --- Manual pad speed 10..100 (one value for the app, the control page and the remote page;
+    //     never locked, saved like every other setting)
+    val manualSpeed: Int = 50,
 ) {
     enum class ScreenMode(val label: String) {
         ON("keep screen on"),
@@ -70,6 +73,7 @@ data class CaptureSettings(
         put("zoom", zoom.toDouble())
         put("screenMode", screenMode.name)
         put("keepInBackground", keepInBackground)
+        put("manualSpeed", manualSpeed)
         put("tracking", tracking.toJson())
     }
 
@@ -86,6 +90,7 @@ data class CaptureSettings(
         zoom = p["zoom"]?.toFloatOrNull() ?: zoom,
         screenMode = p["screenMode"]?.let { m -> ScreenMode.entries.firstOrNull { it.name.equals(m, true) } } ?: screenMode,
         keepInBackground = p["keepInBackground"]?.toBooleanStrictOrNull() ?: keepInBackground,
+        manualSpeed = (p["speed"] ?: p["manualSpeed"])?.toIntOrNull()?.coerceIn(10, 100) ?: manualSpeed,
         tracking = tracking.applyParams(p),
     )
 
@@ -105,6 +110,7 @@ data class CaptureSettings(
             zoom = o.optDouble("zoom", 1.0).toFloat(),
             screenMode = runCatching { ScreenMode.valueOf(o.optString("screenMode", ScreenMode.ON.name)) }.getOrDefault(ScreenMode.ON),
             keepInBackground = o.optBoolean("keepInBackground", false),
+            manualSpeed = o.optInt("manualSpeed", 50).coerceIn(10, 100),
             tracking = o.optJSONObject("tracking")?.let { TrackingSettings.fromJson(it) } ?: TrackingSettings(),
         )
 

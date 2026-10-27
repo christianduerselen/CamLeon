@@ -20,7 +20,7 @@ import org.json.JSONObject
  *   POST /api/recording?on=true|false
  *   POST /api/tracking?on=true|false
  *   POST /api/settings?url=&streamAutoStart=&recordAutoStart=&quality=&audio=&previewQuality=
- *                      &sport=&variant=&youth=&yawRange=&acceleration=   (any subset; yawRange/acceleration ignored while tracking runs)
+ *                      &sport=&variant=&youth=&yawRange=&acceleration=&speed=   (any subset; yawRange/acceleration ignored while tracking runs; speed = pad speed 10..100)
  *   Gimbal manual control / pan range (also tracking override):
  *   POST /api/gimbal/move?yaw=-100..100&pitch=-100..100   (0,0 = stop)   POST /api/gimbal/stop
  *   POST /api/gimbal/home?axis=yaw|pitch|both (drive the axis to 0°)   POST /api/gimbal/home/cancel

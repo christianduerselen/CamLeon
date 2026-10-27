@@ -130,7 +130,7 @@
     <div class="ops" id="opsStatus" style="align-items:center"><span class="mut"><span id="gsrc"></span><span id="gnote"></span> <span id="homing"></span></span>
       <button class="sm stop" id="homeCancel" data-i18n="cancel" onclick="post('/api/gimbal/home/cancel').then(refresh)" style="display:none">Cancel</button></div>
     <label><span data-i18n="speed">Speed</span> <span id="spdV">50</span></label>
-    <input type="range" id="spd" min="10" max="100" value="50" oninput="spdV.textContent=this.value" style="width:100%">
+    <input type="range" id="spd" min="10" max="100" value="50" oninput="spdV.textContent=this.value" onchange="setSetting({speed:this.value})" style="width:100%">
   </div>
 
   <!-- 3. The three switches -->
@@ -412,13 +412,14 @@ async function refresh() {
     lk('lkStreaming', LK.streaming, t('streaming'));
     lk('lkRecording', LK.recording, t('recording'));
     lk('lkVideo', LK.video, LK.streaming && LK.recording ? t('streaming') + ' / ' + t('recording') : LK.streaming ? t('streaming') : t('recording'));
-    ['tSport', 'tVariant', 'tAge', 'yawRange', 'accel', 'trackAuto'].forEach(id => $(id).disabled = !!LK.tracking);
-    ['url', 'streamAuto'].forEach(id => $(id).disabled = !!LK.streaming);
-    $('recAuto').disabled = !!LK.recording;
+    ['tSport', 'tVariant', 'tAge', 'yawRange', 'accel'].forEach(id => $(id).disabled = !!LK.tracking);
+    $('url').disabled = !!LK.streaming;   // the auto-start boxes only matter at the next app start → never locked
     ['quality', 'audio'].forEach(id => $(id).disabled = !!LK.video);
     $('camera').disabled = !!LK.video || cams.length < 2;
     if (focused() !== 'yawRange') { $('yawRange').value = cfg.tracking.yawRange; $('yawRangeV').textContent = cfg.tracking.yawRange; }
     if (focused() !== 'accel') { $('accel').value = cfg.tracking.acceleration; $('accelV').textContent = cfg.tracking.acceleration; }
+    // pad speed: one persisted value for the app, this page and the remote page
+    if (focused() !== 'spd' && cfg.manualSpeed) { $('spd').value = cfg.manualSpeed; $('spdV').textContent = cfg.manualSpeed; }
   } catch (e) { console.warn('refresh failed', e); /* keep last known */ }
 }
 

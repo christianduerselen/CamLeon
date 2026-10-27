@@ -110,7 +110,7 @@ fun CaptureScreen() {
                     }
                 }
             }
-            GimbalPad(yaw, pitch, connected)
+            GimbalPad(yaw, pitch, connected, settings)
         }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -274,8 +274,10 @@ private fun GimbalLinkCard(bleState: ChameleonBleClient.ConnState) {
 
 /** Position line (each axis with its own "→ 0°") + manual pan/tilt pad (hold to move; also tracking override). */
 @Composable
-private fun GimbalPad(yaw: Double?, pitch: Double?, connected: Boolean) {
-    var speed by remember { mutableStateOf(50f) }
+private fun GimbalPad(yaw: Double?, pitch: Double?, connected: Boolean, settings: CaptureSettings) {
+    // The pad speed is a persisted setting shared with the browser pages; the slider edits a local
+    // copy while dragging and saves once released.
+    var speed by remember(settings.manualSpeed) { mutableStateOf(settings.manualSpeed.toFloat()) }
     val motion by CaptureSession.motion.collectAsState()
     fun f(v: Double?) = v?.let { "%.1f°".format(it) } ?: "—"
     Card(Modifier.fillMaxWidth()) {
@@ -314,7 +316,8 @@ private fun GimbalPad(yaw: Double?, pitch: Double?, connected: Boolean) {
                 }
                 HoldButton("▼") { down -> CaptureSession.move(0, if (down) -speed.toInt() else 0) }
                 Text(stringResource(R.string.speed, speed.toInt()), style = MaterialTheme.typography.labelSmall)
-                Slider(value = speed, onValueChange = { speed = it }, valueRange = 10f..100f, modifier = Modifier.fillMaxWidth())
+                Slider(value = speed, onValueChange = { speed = it }, valueRange = 10f..100f, modifier = Modifier.fillMaxWidth(),
+                    onValueChangeFinished = { CaptureSession.updateSettings(settings.copy(manualSpeed = speed.toInt().coerceIn(10, 100))) })
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.pad_hint), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -518,7 +521,7 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
                 Text(stringResource(R.string.accel, s.tracking.acceleration), style = MaterialTheme.typography.bodyMedium)
                 Slider(value = s.tracking.acceleration.toFloat(), onValueChange = { onChange(s.copy(tracking = s.tracking.copy(acceleration = (it / 50).toInt() * 50))) }, valueRange = 200f..1000f, steps = 15, enabled = !lk.tracking)
             }
-            ToggleRow(stringResource(R.string.track_auto), s.trackingAutoStart, enabled = !lk.tracking) { onChange(s.copy(trackingAutoStart = it)) }
+            ToggleRow(stringResource(R.string.track_auto), s.trackingAutoStart, enabled = true) { onChange(s.copy(trackingAutoStart = it)) }   // only matters at the next app start → never locked
             ToggleRow(stringResource(R.string.keep_tilt), s.tracking.keepTilt) { onChange(s.copy(tracking = s.tracking.copy(keepTilt = it))) }   // never locked
             Text(stringResource(R.string.angle_hint), style = MaterialTheme.typography.bodySmall, color = dim)
             HorizontalDivider()
@@ -531,12 +534,13 @@ private fun SettingsPanel(s: CaptureSettings, lk: CaptureSession.Locks, onChange
                 textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace), modifier = Modifier.fillMaxWidth(),
                 trailingIcon = { if (url != s.rtmpUrl && !lk.streaming) TextButton(onClick = { onChange(s.copy(rtmpUrl = url.trim())) }) { Text(stringResource(R.string.save)) } },
             )
-            ToggleRow(stringResource(R.string.stream_auto), s.streamAutoStart, enabled = !lk.streaming) { onChange(s.copy(streamAutoStart = it)) }
+            // auto-start only matters at the next app start → never locked
+            ToggleRow(stringResource(R.string.stream_auto), s.streamAutoStart, enabled = true) { onChange(s.copy(streamAutoStart = it)) }
             HorizontalDivider()
 
             // ---------------- Recording ----------------
             Header(stringResource(R.string.recording), lk.recording, stringResource(R.string.recording))
-            ToggleRow(stringResource(R.string.rec_auto), s.recordAutoStart, enabled = !lk.recording) { onChange(s.copy(recordAutoStart = it)) }
+            ToggleRow(stringResource(R.string.rec_auto), s.recordAutoStart, enabled = true) { onChange(s.copy(recordAutoStart = it)) }
             Text(stringResource(R.string.files_hint), style = MaterialTheme.typography.bodySmall, color = dim)
             HorizontalDivider()
 

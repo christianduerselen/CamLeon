@@ -88,7 +88,7 @@
 
 <div id="left" class="ov">
   <div id="spdbox"><span data-i18n="speed">Speed</span> <b id="spdV">50</b>
-    <input type="range" id="spd" min="10" max="100" value="50" oninput="spdV.textContent=this.value; saveSpeed()"></div>
+    <input type="range" id="spd" min="10" max="100" value="50" oninput="spdV.textContent=this.value" onchange="saveSpeed()"></div>
 </div>
 
 <div id="padbox" class="ov">
@@ -108,9 +108,8 @@ const { api, post } = CamLeon;
 const { t } = CamLeonI18N;
 CamLeonI18N.apply(document);
 
-// speed is remembered per browser
-try { const v = localStorage.getItem('speed'); if (v) { $('spd').value = v; $('spdV').textContent = v; } } catch (e) {}
-function saveSpeed() { try { localStorage.setItem('speed', $('spd').value); } catch (e) {} }
+// pad speed: one persisted setting on the phone, shared with the app and the control page
+function saveSpeed() { post('/api/settings?speed=' + $('spd').value).then(refresh); }
 
 // ---- the three switches + status strip -------------------------------------------------------
 let state = { tracking: false, streaming: false, recording: false };
@@ -130,6 +129,7 @@ async function refresh() {
     const trk = s.tracking || {}, g = s.gimbal || {}, st = s.streaming || {}, rec = s.recording || {}, ph = s.phone || {}, cfg = s.settings || {};
     const ready = !!g.connected;
     state = { tracking: !!trk.on, streaming: !!(st.on || st.state === 'connecting'), recording: !!rec.on };
+    if (cfg.manualSpeed && document.activeElement !== $('spd')) { $('spd').value = cfg.manualSpeed; $('spdV').textContent = cfg.manualSpeed; }
     // tracking: needs the gimbal
     if (!ready) pill($('swTrack'), t('tracking') + ' · ' + t('noGimbal'), 'err');
     else if (trk.gimbalActive) pill($('swTrack'), t('tracking') + ' · ' + t('running'), 'on');

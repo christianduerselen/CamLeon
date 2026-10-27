@@ -148,7 +148,7 @@ POST /api/tracking?on=true|false
 POST /api/streaming?on=true|false
 POST /api/recording?on=true|false
 GET  /api/status
-POST /api/settings?quality=P1080&audio=true&previewQuality=P540&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=120&acceleration=800&screenMode=ON&keepInBackground=false&camera=<id>&zoom=1.5&keepTilt=true
+POST /api/settings?quality=P1080&audio=true&previewQuality=P540&url=rtmp://...&sport=BASKETBALL&variant=full_high&youth=false&yawRange=120&acceleration=800&screenMode=ON&keepInBackground=false&camera=<id>&zoom=1.5&keepTilt=true&speed=50
 POST /api/gimbal/move?yaw=-100..100&pitch=-100..100      POST /api/gimbal/stop
 POST /api/gimbal/home?axis=yaw|pitch                     POST /api/gimbal/home/cancel
 GET  /api/snapshot.jpg                                    (current camera frame at capture resolution)

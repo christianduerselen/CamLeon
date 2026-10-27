@@ -158,10 +158,11 @@ object CaptureSession {
 
     /**
      * Settings are grouped by function and each group is LOCKED while its function is active:
-     *  - tracking  (mode, rotation angle, acceleration, auto-start) while tracking runs — the gimbal
+     *  - tracking  (mode, rotation angle, acceleration) while tracking runs — the gimbal
      *    takes 0x72 parameters only before SDK start (no ack/log for a live 0x72),
-     *  - streaming (RTMP URL, auto-start) while streaming,
-     *  - recording (auto-start) while recording,
+     *  - streaming (RTMP URL) while streaming,
+     *  - recording (nothing of its own) while recording,
+     *  The three auto-start switches only matter at the next app start → never locked.
      *  - video     (camera, quality, audio) while streaming OR recording — the encoder cannot be re-prepared mid-run.
      *  The browser preview quality and the zoom are never locked: the preview only changes the per-viewer
      *  WebRTC encoders, the zoom is a crop inside the camera and keeps the capture format.
@@ -188,9 +189,6 @@ object CaptureSession {
             quality = if (lk.video) old.quality else coerceQuality(new0.quality),
             audioEnabled = if (lk.video) old.audioEnabled else new0.audioEnabled,
             rtmpUrl = if (lk.streaming) old.rtmpUrl else new0.rtmpUrl,
-            streamAutoStart = if (lk.streaming) old.streamAutoStart else new0.streamAutoStart,
-            recordAutoStart = if (lk.recording) old.recordAutoStart else new0.recordAutoStart,
-            trackingAutoStart = if (lk.tracking) old.trackingAutoStart else new0.trackingAutoStart,
             tracking = if (lk.tracking) old.tracking.copy(keepTilt = new0.tracking.keepTilt) else new0.tracking,   // keepTilt is never locked
         )
         val modeChanged = new.tracking.modeId() != old.tracking.modeId()
